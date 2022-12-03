@@ -1,9 +1,36 @@
+import 'dart:math';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/UserData.dart';
 import '../modules/FileLoad.dart';
 import '../theme/AppThemeDefault.dart';
+
+class OpenFiles extends ChangeNotifier {
+  List<FileContainer> _openFile = [];
+
+  set openFile(List<FileContainer> openFile) {
+    _openFile = openFile;
+    notifyListeners();
+  }
+
+  void addFile(FileContainer openFile) {
+    _openFile.add(openFile);
+    notifyListeners();
+  }
+
+  void removeFile(Key? keyFile) {
+    if (keyFile != null) {
+      _openFile.removeWhere(
+        (element) => element.key == keyFile,
+      );
+      notifyListeners();
+    }
+  }
+
+  List<FileContainer> get openFile => _openFile;
+}
 
 class FileRow extends ChangeNotifier {
   //Класс провайдер для смены тем приложения
@@ -26,6 +53,7 @@ class WorkPage extends StatefulWidget {
 
 class _WorkPageState extends State<WorkPage> {
   final FileRow _fileRow = FileRow();
+  final OpenFiles _openFile = OpenFiles();
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +62,9 @@ class _WorkPageState extends State<WorkPage> {
         //Добавление Provider темы в MultiProvider
         ChangeNotifierProvider(
           create: (context) => _fileRow,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => _openFile,
         ),
       ],
       builder: (context, child) {
@@ -90,6 +121,8 @@ class MFileView extends StatefulWidget {
 }
 
 class _MFileViewState extends State<MFileView> {
+  final ScrollController controller = ScrollController();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -116,52 +149,80 @@ class _MFileViewState extends State<MFileView> {
                   Radius.circular(10),
                 ),
               ),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  GestureDetector(
-                    onTap: () async {
-                      FilePickerResult? result =
-                          await FilePicker.platform.pickFiles();
+                  Expanded(
+                    flex: 14,
+                    child: Scrollbar(
+                      controller: controller,
+                      interactive: true,
+                      trackVisibility: true,
+                      thumbVisibility: true,
+                      child: ListView(
+                        controller: controller,
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          ...context.watch<OpenFiles>().openFile,
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: GestureDetector(
+                      onTap: () async {
+                        FilePickerResult? result =
+                            await FilePicker.platform.pickFiles();
 
-                      if (result != null) {
-                        PlatformFile file = result.files.first;
+                        if (result != null) {
+                          PlatformFile file = result.files.first;
 
-                        print(file.name);
-                        // print(file.bytes);
-                        // print(file.size);
-                        // print(file.extension);
-                        // print(file.path);
+                          print(file.name);
+                          // print(file.bytes);
+                          // print(file.size);
+                          // print(file.extension);
+                          // print(file.path);
 
-                        fileFetch(file.name).then((value) {
-                          print("File OK");
-                          context.read<FileRow>().fileRow = testData
-                              .map((data) => buildTableRow(
-                                  number: data.number ?? "",
-                                  type: data.type ?? "",
-                                  source: data.source ?? "",
-                                  contentText: data.contentText ?? "",
-                                  originalText: data.originalText ?? "",
-                                  date: data.date ?? "",
-                                  analyzedText: data.analyzedText ?? "",
-                                  probability: data.probability ?? ""))
-                              .toList();
-                        }).catchError((error) {
-                          setState(() {
-                            print(error.toString());
-                            // msg = error.toString();
+                          fileFetch(file.name).then((value) {
+                            print("File OK");
+                            context.read<FileRow>().fileRow = testData
+                                .map((data) => buildTableRow(
+                                    number: data.number ?? "",
+                                    type: data.type ?? "",
+                                    source: data.source ?? "",
+                                    contentText: data.contentText ?? "",
+                                    originalText: data.originalText ?? "",
+                                    date: data.date ?? "",
+                                    analyzedText: data.analyzedText ?? "",
+                                    probability: data.probability ?? ""))
+                                .toList();
+
+                            context.read<OpenFiles>().addFile(FileContainer(
+                                key: () {
+                                  var r = Random();
+
+                                  return Key(String.fromCharCodes(List.generate(
+                                      10, (index) => r.nextInt(33) + 89)));
+                                }(),
+                                name: file.name));
+                          }).catchError((error) {
+                            setState(() {
+                              print(error.toString());
+                              // msg = error.toString();
+                            });
                           });
-                        });
-                      } else {
-                        print("Не удалось открыть файл");
-                        // User canceled the picker
-                      }
-                    },
-                    child: const SizedBox(
-                        height: double.infinity,
-                        child: FittedBox(
-                            alignment: Alignment.center,
-                            child: Icon(Icons.add))),
+                        } else {
+                          print("Не удалось открыть файл");
+                          // User canceled the picker
+                        }
+                      },
+                      child: const SizedBox(
+                          height: double.infinity,
+                          child: FittedBox(
+                              alignment: Alignment.center,
+                              child: Icon(Icons.add))),
+                    ),
                   )
                 ],
               )),
@@ -531,9 +592,64 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
         ),
         child: Text(
           "Анализировать",
-          style: TextStyle(fontSize: 40, color: appTheme(context).textColor2),
+          style: TextStyle(fontSize: 30, color: appTheme(context).textColor2),
         ),
       ),
+    );
+  }
+}
+
+class FileContainer extends StatefulWidget {
+  String name;
+  FileContainer({required super.key, required this.name});
+
+  @override
+  State<FileContainer> createState() => _FileContainerState();
+}
+
+class _FileContainerState extends State<FileContainer> {
+  late String name;
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      name = widget.name;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+            padding: const EdgeInsets.all(20),
+            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+                color: appTheme(context).secondaryColor,
+                border: Border.all(color: appTheme(context).accentColor),
+                borderRadius: const BorderRadius.all(Radius.circular(5))),
+            child: Text(name)),
+        Positioned(
+          top: 5,
+          right: 0,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              context.read<OpenFiles>().removeFile(widget.key);
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                color: appTheme(context).primaryColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: appTheme(context).accentColor),
+              ),
+              child: Icon(Icons.close),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

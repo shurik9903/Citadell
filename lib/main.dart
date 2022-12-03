@@ -92,48 +92,7 @@ class _MyAppState extends State<MyApp> {
             return MaterialPageRoute(
                 builder: (context) => Scaffold(
                       endDrawer: Drawer(
-                        child: ListView(
-                          children: [
-                            DrawerHeader(
-                                margin: EdgeInsets.zero,
-                                padding: EdgeInsets.zero,
-                                child: Container(
-                                  color: appTheme(context).secondaryColor,
-                                )),
-                            ListTile(
-                              title: Text("Сохранить данные"),
-                              onTap: () {},
-                            ),
-                            ListTile(
-                              title: Text("Загрузить данные"),
-                              onTap: () {},
-                            ),
-                            ListTile(
-                              title: Text("Доп. Информация"),
-                              onTap: () {},
-                            ),
-                            ListTile(
-                              title: Text("Настройки"),
-                              onTap: () {
-                                Navigator.pushNamed(context, '/option');
-                              },
-                            ),
-                            ListTile(
-                              title: Text("Закрыть файл"),
-                              onTap: () {},
-                            ),
-                            ListTile(
-                              title: Text("Выход"),
-                              onTap: () {},
-                            ),
-                            ListTile(
-                              title: Text("Закрыть"),
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                            ),
-                          ],
-                        ),
+                        child: DrawerMenu(),
                       ),
                       body: LayoutBuilder(
                         builder: (context, constraints) =>
@@ -156,6 +115,75 @@ class _MyAppState extends State<MyApp> {
           },
         );
       },
+    );
+  }
+}
+
+class DrawerMenu extends StatefulWidget {
+  const DrawerMenu({super.key});
+
+  @override
+  State<DrawerMenu> createState() => _DrawerMenuState();
+}
+
+class _DrawerMenuState extends State<DrawerMenu> {
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        DrawerHeader(
+            margin: EdgeInsets.zero,
+            padding: EdgeInsets.zero,
+            child: Container(
+              color: appTheme(context).secondaryColor,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      context.read<SelectTheme>().change();
+                    },
+                    child: Container(
+                      child: Icon(Icons.palette,
+                          color: appTheme(context).additionalColor3),
+                    ),
+                  )
+                ],
+              ),
+            )),
+        ListTile(
+          title: Text("Сохранить данные"),
+          onTap: () {},
+        ),
+        ListTile(
+          title: Text("Загрузить данные"),
+          onTap: () {},
+        ),
+        ListTile(
+          title: Text("Доп. Информация"),
+          onTap: () {},
+        ),
+        ListTile(
+          title: Text("Настройки"),
+          onTap: () {
+            Navigator.pushNamed(context, '/option');
+          },
+        ),
+        ListTile(
+          title: Text("Закрыть файл"),
+          onTap: () {},
+        ),
+        ListTile(
+          title: Text("Выход"),
+          onTap: () {},
+        ),
+        ListTile(
+          title: Text("Закрыть"),
+          onTap: () {
+            Navigator.pop(context);
+          },
+        ),
+      ],
     );
   }
 }
