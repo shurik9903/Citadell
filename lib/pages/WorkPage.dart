@@ -1,7 +1,9 @@
 import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/modules/DictionaryFetch.dart';
 import 'package:provider/provider.dart';
 import '../data/UserData.dart';
 import '../modules/FileFetch.dart';
@@ -33,7 +35,6 @@ class OpenFiles extends ChangeNotifier {
 }
 
 class FileRow extends ChangeNotifier {
-  //Класс провайдер для смены тем приложения
   List<DataRow> _fileRow = [];
 
   set fileRow(List<DataRow> fileRow) {
@@ -42,6 +43,17 @@ class FileRow extends ChangeNotifier {
   }
 
   List<DataRow> get fileRow => _fileRow;
+}
+
+class DictioneryText extends ChangeNotifier {
+  List<TextSpan> _dictText = [];
+
+  set dictText(List<TextSpan> dictText) {
+    _dictText = dictText;
+    notifyListeners();
+  }
+
+  List<TextSpan> get dictText => _dictText;
 }
 
 class WorkPage extends StatefulWidget {
@@ -54,6 +66,7 @@ class WorkPage extends StatefulWidget {
 class _WorkPageState extends State<WorkPage> {
   final FileRow _fileRow = FileRow();
   final OpenFiles _openFile = OpenFiles();
+  final DictioneryText _dictioneryText = DictioneryText();
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +78,9 @@ class _WorkPageState extends State<WorkPage> {
         ),
         ChangeNotifierProvider(
           create: (context) => _openFile,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => _dictioneryText,
         ),
       ],
       builder: (context, child) {
@@ -194,7 +210,7 @@ class _MFileViewState extends State<MFileView> {
                                     contentText: data.contentText ?? "",
                                     originalText: data.originalText ?? "",
                                     date: data.date ?? "",
-                                    analyzedText: data.analyzedText ?? "",
+                                    analyzedText: [],
                                     probability: data.probability ?? ""))
                                 .toList();
 
@@ -286,7 +302,7 @@ DataRow buildTableRow(
     String contentText = "",
     String originalText = "",
     String date = "",
-    String analyzedText = "",
+    List<TextSpan>? analyzedText,
     String probability = ""}) {
   bool t = false;
 
@@ -311,9 +327,9 @@ DataRow buildTableRow(
       alignment: Alignment.center,
       child: Text(date),
     )),
-    DataCell(Container(
-      child: Text(analyzedText),
-    )),
+    DataCell(
+      MAnalysisText(parseText: analyzedText),
+    ),
     DataCell(Container(
       alignment: Alignment.center,
       child: Text(
@@ -330,12 +346,71 @@ DataRow buildTableRow(
         ),
       ),
     )),
-    DataCell(Container(
-      alignment: Alignment.center,
-      child: Text(""),
-    )),
-    DataCell(MCheckBox()),
+    DataCell(
+      MUpdateBox(),
+    ),
+    DataCell(
+      MCheckBox(),
+    ),
   ]);
+}
+
+class MAnalysisText extends StatefulWidget {
+  List<TextSpan>? parseText;
+
+  MAnalysisText({super.key, this.parseText});
+
+  @override
+  State<MAnalysisText> createState() => _MAnalysisTextState();
+}
+
+class _MAnalysisTextState extends State<MAnalysisText> {
+  late List<TextSpan> _parseText;
+
+  @override
+  void initState() {
+    super.initState();
+    _parseText = widget.parseText ?? [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: RichText(text: TextSpan(children: _parseText)),
+    );
+  }
+}
+
+class MUpdateBox extends StatefulWidget {
+  const MUpdateBox({super.key});
+
+  @override
+  State<MUpdateBox> createState() => _MUpdateBoxState();
+}
+
+class _MUpdateBoxState extends State<MUpdateBox> {
+  bool? select = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.center,
+      child: Checkbox(
+        tristate: true,
+        value: select,
+        activeColor: select == true
+            ? Color.fromARGB(255, 0, 255, 0)
+            : select == null
+                ? Color.fromARGB(255, 255, 0, 0)
+                : null,
+        onChanged: (value) {
+          setState(() {
+            select = value;
+          });
+        },
+      ),
+    );
+  }
 }
 
 class MCheckBox extends StatefulWidget {
@@ -567,11 +642,13 @@ class _MDictionaryState extends State<MDictionary> {
                 Expanded(
                   flex: 9,
                   child: Container(
+                    padding: const EdgeInsets.all(20),
+                    height: double.infinity,
                     width: double.infinity,
-                    alignment: Alignment.center,
+                    alignment: Alignment.topLeft,
                     child: RichText(
-                      text: const TextSpan(
-                        children: [],
+                      text: TextSpan(
+                        children: context.watch<DictioneryText>().dictText,
                       ),
                     ),
                   ),
@@ -602,7 +679,6 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
         onTap: () {
           fileFetch("testid").then((value) {
             print("Analysis OK");
-            context.read<FileRow>().fileRow = [];
 
             context.read<FileRow>().fileRow = testDataAnalysis
                 .map((data) => buildTableRow(
@@ -612,7 +688,58 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
                     contentText: data.contentText ?? "",
                     originalText: data.originalText ?? "",
                     date: data.date ?? "",
-                    analyzedText: data.analyzedText ?? "",
+                    analyzedText: [
+                      ...?data.analyzedText
+                          ?.map(
+                            (element) => TextSpan(
+                              recognizer: element.type != null
+                                  ? (TapGestureRecognizer()
+                                    ..onTap = () {
+                                      dictionaryFetch(element.text ?? "")
+                                          .then((value) {
+                                        print("Dictionary OK");
+
+                                        print(element.text);
+                                        context
+                                            .read<DictioneryText>()
+                                            .dictText = [
+                                          TextSpan(
+                                            text: "${element.text} - ",
+                                            style: TextStyle(
+                                              color: element.type == null
+                                                  ? appTheme(context).textColor1
+                                                  : element.type?.typeColor,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: testWord[element.text
+                                                    ?.toLowerCase()
+                                                    .replaceAll(' ', '')] ??
+                                                "",
+                                            style: TextStyle(
+                                              color: element.type == null
+                                                  ? appTheme(context).textColor1
+                                                  : element.type?.typeColor,
+                                            ),
+                                          )
+                                        ];
+                                      }).catchError((error) {
+                                        setState(() {
+                                          print(error.toString());
+                                        });
+                                      });
+                                    })
+                                  : null,
+                              text: element.text,
+                              style: TextStyle(
+                                color: element.type == null
+                                    ? appTheme(context).textColor1
+                                    : element.type?.typeColor,
+                              ),
+                            ),
+                          )
+                          .toList()
+                    ],
                     probability: data.probability ?? ""))
                 .toList();
           }).catchError((error) {

@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_univ/data/AnalysisTextData.dart';
+
 class RowTableData {
   RowTableData(
       {this.number,
@@ -17,7 +20,7 @@ class RowTableData {
   String? contentText;
   String? originalText;
   String? date;
-  String? analyzedText;
+  List<AnalysisTextData>? analyzedText;
   String? probability;
   String? update;
   String? check;

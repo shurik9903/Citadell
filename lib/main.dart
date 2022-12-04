@@ -69,25 +69,25 @@ class _MyAppState extends State<MyApp> {
           onGenerateRoute: (settings) {
             var user_data = UserData_Singleton();
 
-            if (user_data.token.isEmpty) {
-              _enumPage = EnumPage.login;
-            } else {
-              var path = settings.name?.split('/');
-              switch (path?[1]) {
-                case "login":
-                  _enumPage = EnumPage.login;
-                  break;
-                case "work":
-                  _enumPage = EnumPage.work;
-                  break;
-                case "option":
-                  _enumPage = EnumPage.option;
-                  break;
-                default:
-                  _enumPage = EnumPage.none;
-                  break;
-              }
+            // if (user_data.token.isEmpty) {
+            //   _enumPage = EnumPage.login;
+            // } else {
+            var path = settings.name?.split('/');
+            switch (path?[1]) {
+              case "login":
+                _enumPage = EnumPage.login;
+                break;
+              case "work":
+                _enumPage = EnumPage.work;
+                break;
+              case "option":
+                _enumPage = EnumPage.option;
+                break;
+              default:
+                _enumPage = EnumPage.none;
+                break;
             }
+            // }
             return MaterialPageRoute(
                 builder: (context) => Scaffold(
                       endDrawer: const Drawer(
