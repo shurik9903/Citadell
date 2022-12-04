@@ -58,6 +58,17 @@ class DictioneryText extends ChangeNotifier {
   List<TextSpan> get dictText => _dictText;
 }
 
+class TypeViewMenu extends ChangeNotifier {
+  bool _show = true;
+
+  set show(bool show) {
+    _show = show;
+    notifyListeners();
+  }
+
+  bool get show => _show;
+}
+
 class WorkPage extends StatefulWidget {
   const WorkPage({super.key});
 
@@ -69,7 +80,8 @@ class _WorkPageState extends State<WorkPage> {
   final FileRow _fileRow = FileRow();
   final OpenFiles _openFile = OpenFiles();
   final DictioneryText _dictioneryText = DictioneryText();
-  bool viewMenu = true;
+  // bool viewMenu = true;
+  TypeViewMenu _typeViewMenu = TypeViewMenu();
 
   @override
   void initState() {
@@ -93,6 +105,9 @@ class _WorkPageState extends State<WorkPage> {
         ChangeNotifierProvider(
           create: (context) => _dictioneryText,
         ),
+        ChangeNotifierProvider(
+          create: (context) => _typeViewMenu,
+        ),
       ],
       builder: (context, child) {
         return Center(
@@ -103,7 +118,7 @@ class _WorkPageState extends State<WorkPage> {
               mainAxisSize: MainAxisSize.max,
               children: [
                 Expanded(
-                  flex: 900,
+                  flex: context.watch<TypeViewMenu>().show ? 1500 : 900,
                   child: Container(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
@@ -128,31 +143,51 @@ class _WorkPageState extends State<WorkPage> {
                   flex: 3,
                 ),
                 Expanded(
-                  flex: 200,
+                  flex: context.watch<TypeViewMenu>().show ? 80 : 200,
                   child: Stack(
+                    fit: StackFit.expand,
                     clipBehavior: Clip.none,
                     children: [
                       MSidebar(),
-                      Container(
-                        margin: const EdgeInsets.only(right: 5),
-                        height: 100,
-                        child: TextButton(
-                          style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all<Color>(
-                              appTheme(context).secondaryColor,
-                            ),
-                            shape: MaterialStateProperty.all(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30.0),
+                      Positioned.fill(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            heightFactor: 0.2,
+                            widthFactor:
+                                context.watch<TypeViewMenu>().show ? 0.3 : 0.1,
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 5),
+                              child: TextButton(
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                    appTheme(context).secondaryColor,
+                                  ),
+                                  shape: MaterialStateProperty.all(
+                                    RoundedRectangleBorder(
+                                      borderRadius: context
+                                              .watch<TypeViewMenu>()
+                                              .show
+                                          ? const BorderRadius.only(
+                                              topLeft: Radius.circular(30),
+                                              bottomLeft: Radius.circular(30))
+                                          : const BorderRadius.only(
+                                              topRight: Radius.circular(30),
+                                              bottomRight: Radius.circular(30)),
+                                    ),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  context.read<TypeViewMenu>().show =
+                                      !context.read<TypeViewMenu>().show;
+                                },
+                                child: context.watch<TypeViewMenu>().show
+                                    ? const Text('<')
+                                    : const Text('>'),
                               ),
                             ),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              viewMenu = !viewMenu;
-                            });
-                          },
-                          child: viewMenu ? const Text('>') : const Text('<'),
                         ),
                       ),
                     ],
@@ -518,14 +553,17 @@ class _MSidebarState extends State<MSidebar> {
         ),
       ),
       child: Column(
-        children: const [
+        children: [
           Expanded(
             flex: 20,
-            child: MUserPanel(),
+            child: context.watch<TypeViewMenu>().show
+                ? MMenuButton()
+                : MUserPanel(),
           ),
           Expanded(
             flex: 110,
-            child: MDictionary(),
+            child:
+                context.watch<TypeViewMenu>().show ? SizedBox() : MDictionary(),
           ),
           Expanded(
             flex: 10,
@@ -750,8 +788,11 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
                                       dictionaryFetch(element.text ?? "")
                                           .then((value) {
                                         print("Dictionary OK");
-
                                         print(element.text);
+
+                                        context.read<TypeViewMenu>().show =
+                                            false;
+
                                         context
                                             .read<DictioneryText>()
                                             .dictText = [
@@ -802,18 +843,26 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
         },
         child: Container(
           alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 18, 204, 18),
-            border: Border.all(
-              color: appTheme(context).accentColor,
-              width: 5,
-            ),
-            borderRadius: const BorderRadius.all(
-              Radius.circular(20),
-            ),
-          ),
+          decoration: context.watch<TypeViewMenu>().show
+              ? BoxDecoration(
+                  color: const Color.fromARGB(255, 18, 204, 18),
+                  border: Border.all(
+                    color: appTheme(context).accentColor,
+                    width: 5,
+                  ),
+                  shape: BoxShape.circle)
+              : BoxDecoration(
+                  color: const Color.fromARGB(255, 18, 204, 18),
+                  border: Border.all(
+                    color: appTheme(context).accentColor,
+                    width: 5,
+                  ),
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(20),
+                  ),
+                ),
           child: Text(
-            "Анализировать",
+            context.watch<TypeViewMenu>().show ? ">>" : "Анализировать",
             style: TextStyle(fontSize: 30, color: appTheme(context).textColor2),
           ),
         ),
