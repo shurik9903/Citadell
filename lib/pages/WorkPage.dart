@@ -4,7 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/UserData.dart';
-import '../modules/FileLoad.dart';
+import '../modules/FileFetch.dart';
 import '../theme/AppThemeDefault.dart';
 
 class OpenFiles extends ChangeNotifier {
@@ -70,7 +70,7 @@ class _WorkPageState extends State<WorkPage> {
       builder: (context, child) {
         return Center(
           child: Container(
-            color: appTheme(context).primaryColor,
+            color: appTheme(context).tertiaryColor,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               mainAxisSize: MainAxisSize.max,
@@ -140,7 +140,7 @@ class _MFileViewState extends State<MFileView> {
           heightFactor: 0.85,
           child: Container(
               decoration: BoxDecoration(
-                color: appTheme(context).tertiaryColor,
+                color: appTheme(context).primaryColor,
                 border: Border.all(
                   color: appTheme(context).accentColor,
                   width: 5,
@@ -244,7 +244,7 @@ class _MTableViewState extends State<MTableView> {
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: appTheme(context).tertiaryColor,
+        color: appTheme(context).primaryColor,
         borderRadius: const BorderRadius.all(
           Radius.circular(15),
         ),
@@ -288,7 +288,7 @@ DataRow buildTableRow(
     String date = "",
     String analyzedText = "",
     String probability = ""}) {
-  bool? t = false;
+  bool t = false;
 
   return DataRow(cells: [
     DataCell(Container(
@@ -334,14 +334,34 @@ DataRow buildTableRow(
       alignment: Alignment.center,
       child: Text(""),
     )),
-    DataCell(Container(
+    DataCell(MCheckBox()),
+  ]);
+}
+
+class MCheckBox extends StatefulWidget {
+  const MCheckBox({super.key});
+
+  @override
+  State<MCheckBox> createState() => _MCheckBoxState();
+}
+
+class _MCheckBoxState extends State<MCheckBox> {
+  bool select = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
       alignment: Alignment.center,
       child: Checkbox(
-        value: t,
-        onChanged: (value) {},
+        value: select,
+        onChanged: (value) {
+          setState(() {
+            select = !select;
+          });
+        },
       ),
-    )),
-  ]);
+    );
+  }
 }
 
 List<DataColumn> buildTableColumns(List<String> labels, BuildContext context) =>
@@ -354,7 +374,7 @@ List<DataColumn> buildTableColumns(List<String> labels, BuildContext context) =>
               decoration: BoxDecoration(
                   color: appTheme(context).secondaryColor,
                   border: Border.all(
-                    color: appTheme(context).primaryColor,
+                    color: appTheme(context).tertiaryColor,
                     width: 1,
                   ),
                   borderRadius: element.key == 0
@@ -381,7 +401,7 @@ class _MSidebarState extends State<MSidebar> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: appTheme(context).tertiaryColor,
+        color: appTheme(context).primaryColor,
         borderRadius: const BorderRadius.all(
           Radius.circular(15),
         ),
@@ -467,7 +487,7 @@ class _MUserPanelState extends State<MUserPanel> {
                 child: Container(
                   margin: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
-                      color: appTheme(context).primaryColor,
+                      color: appTheme(context).tertiaryColor,
                       shape: BoxShape.circle),
                   child: Container(
                     padding: const EdgeInsets.all(10),
@@ -522,7 +542,7 @@ class _MDictionaryState extends State<MDictionary> {
           child: Container(
             decoration: BoxDecoration(
                 border: Border.all(
-                    color: appTheme(context).tertiaryColor, width: 10)),
+                    color: appTheme(context).primaryColor, width: 10)),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -578,21 +598,45 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
     return FractionallySizedBox(
       widthFactor: 0.8,
       heightFactor: 0.95,
-      child: Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 18, 204, 18),
-          border: Border.all(
-            color: appTheme(context).accentColor,
-            width: 5,
+      child: GestureDetector(
+        onTap: () {
+          fileFetch("testid").then((value) {
+            print("Analysis OK");
+            context.read<FileRow>().fileRow = [];
+
+            context.read<FileRow>().fileRow = testDataAnalysis
+                .map((data) => buildTableRow(
+                    number: data.number ?? "",
+                    type: data.type ?? "",
+                    source: data.source ?? "",
+                    contentText: data.contentText ?? "",
+                    originalText: data.originalText ?? "",
+                    date: data.date ?? "",
+                    analyzedText: data.analyzedText ?? "",
+                    probability: data.probability ?? ""))
+                .toList();
+          }).catchError((error) {
+            setState(() {
+              print(error.toString());
+            });
+          });
+        },
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 18, 204, 18),
+            border: Border.all(
+              color: appTheme(context).accentColor,
+              width: 5,
+            ),
+            borderRadius: const BorderRadius.all(
+              Radius.circular(20),
+            ),
           ),
-          borderRadius: const BorderRadius.all(
-            Radius.circular(20),
+          child: Text(
+            "Анализировать",
+            style: TextStyle(fontSize: 30, color: appTheme(context).textColor2),
           ),
-        ),
-        child: Text(
-          "Анализировать",
-          style: TextStyle(fontSize: 30, color: appTheme(context).textColor2),
         ),
       ),
     );
@@ -641,7 +685,7 @@ class _FileContainerState extends State<FileContainer> {
             },
             child: Container(
               decoration: BoxDecoration(
-                color: appTheme(context).primaryColor,
+                color: appTheme(context).tertiaryColor,
                 shape: BoxShape.circle,
                 border: Border.all(color: appTheme(context).accentColor),
               ),

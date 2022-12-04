@@ -15,6 +15,12 @@ abstract class UserDataBase {
   set token(String token) => _token = token;
 
   String get token => _token;
+
+  void clear() {
+    _id = '';
+    _login = '';
+    _token = '';
+  }
 }
 
 //Singleton конструктор

@@ -45,7 +45,6 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   //Provider для возможности глобально изменить цвет
   final SelectTheme _selectTheme = SelectTheme();
-
   EnumPage _enumPage = EnumPage.none;
 
   @override
@@ -91,7 +90,7 @@ class _MyAppState extends State<MyApp> {
             }
             return MaterialPageRoute(
                 builder: (context) => Scaffold(
-                      endDrawer: Drawer(
+                      endDrawer: const Drawer(
                         child: DrawerMenu(),
                       ),
                       body: LayoutBuilder(
@@ -175,7 +174,10 @@ class _DrawerMenuState extends State<DrawerMenu> {
         ),
         ListTile(
           title: Text("Выход"),
-          onTap: () {},
+          onTap: () {
+            UserData_Singleton().clear();
+            Navigator.pushNamed(context, '/login');
+          },
         ),
         ListTile(
           title: Text("Закрыть"),
