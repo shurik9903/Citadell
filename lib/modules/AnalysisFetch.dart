@@ -38,7 +38,7 @@ List<AnalysisTextData> testAnulysisText2 = [
   AnalysisTextData(text: "Нашли ещё лазейку как к "),
   AnalysisTextData(text: "людям ", type: TextType.object),
   AnalysisTextData(text: "в карман "),
-  AnalysisTextData(text: "залесть ", type: TextType.action),
+  AnalysisTextData(text: "залезть ", type: TextType.action),
   AnalysisTextData(text: ", а как "),
   AnalysisTextData(text: "кружки ", type: TextType.object),
   AnalysisTextData(text: "бесплатные ", type: TextType.characteristic),

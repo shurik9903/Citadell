@@ -8,6 +8,17 @@ import 'package:provider/provider.dart';
 import 'pages/RoutePage.dart';
 import 'theme/ThemeFactory.dart';
 
+class ConnectStatus extends ChangeNotifier {
+  bool _status = false;
+
+  set status(bool status) {
+    _status = status;
+    notifyListeners();
+  }
+
+  bool get status => _status;
+}
+
 class SelectTheme extends ChangeNotifier {
   //Класс провайдер для смены тем приложения
   EnumTheme _enumTheme = EnumTheme.dark;
@@ -45,6 +56,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   //Provider для возможности глобально изменить цвет
   final SelectTheme _selectTheme = SelectTheme();
+  final ConnectStatus _connectStatus = ConnectStatus();
   EnumPage _enumPage = EnumPage.none;
 
   @override
@@ -59,6 +71,9 @@ class _MyAppState extends State<MyApp> {
         //Добавление Provider темы в MultiProvider
         ChangeNotifierProvider(
           create: (context) => _selectTheme,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => _connectStatus,
         ),
       ],
       builder: (context, child) {

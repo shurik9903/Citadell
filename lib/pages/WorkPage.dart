@@ -3,9 +3,11 @@ import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/modules/ConnectionFetch.dart';
 import 'package:flutter_univ/modules/DictionaryFetch.dart';
 import 'package:provider/provider.dart';
 import '../data/UserData.dart';
+import '../main.dart';
 import '../modules/FileFetch.dart';
 import '../theme/AppThemeDefault.dart';
 
@@ -67,6 +69,15 @@ class _WorkPageState extends State<WorkPage> {
   final FileRow _fileRow = FileRow();
   final OpenFiles _openFile = OpenFiles();
   final DictioneryText _dictioneryText = DictioneryText();
+  bool viewMenu = true;
+
+  @override
+  void initState() {
+    super.initState();
+    callConnection((connect) {
+      context.read<ConnectStatus>().status = connect;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,9 +127,36 @@ class _WorkPageState extends State<WorkPage> {
                 Spacer(
                   flex: 3,
                 ),
-                const Expanded(
+                Expanded(
                   flex: 200,
-                  child: MSidebar(),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      MSidebar(),
+                      Container(
+                        margin: const EdgeInsets.only(right: 5),
+                        height: 100,
+                        child: TextButton(
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                              appTheme(context).secondaryColor,
+                            ),
+                            shape: MaterialStateProperty.all(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30.0),
+                              ),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              viewMenu = !viewMenu;
+                            });
+                          },
+                          child: viewMenu ? const Text('>') : const Text('<'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -346,10 +384,10 @@ DataRow buildTableRow(
         ),
       ),
     )),
-    DataCell(
+    const DataCell(
       MUpdateBox(),
     ),
-    DataCell(
+    const DataCell(
       MCheckBox(),
     ),
   ]);
@@ -375,9 +413,7 @@ class _MAnalysisTextState extends State<MAnalysisText> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: RichText(text: TextSpan(children: _parseText)),
-    );
+    return RichText(text: TextSpan(children: _parseText));
   }
 }
 
@@ -399,9 +435,9 @@ class _MUpdateBoxState extends State<MUpdateBox> {
         tristate: true,
         value: select,
         activeColor: select == true
-            ? Color.fromARGB(255, 0, 255, 0)
+            ? const Color.fromARGB(255, 0, 255, 0)
             : select == null
-                ? Color.fromARGB(255, 255, 0, 0)
+                ? const Color.fromARGB(255, 255, 0, 0)
                 : null,
         onChanged: (value) {
           setState(() {
@@ -553,34 +589,50 @@ class _MUserPanelState extends State<MUserPanel> {
                 ),
               ),
             ),
-            Expanded(
+            const Expanded(
               flex: 3,
-              child: GestureDetector(
-                onTap: () {
-                  Scaffold.of(context).openEndDrawer();
-                },
-                child: Container(
-                  margin: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                      color: appTheme(context).tertiaryColor,
-                      shape: BoxShape.circle),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    width: double.infinity,
-                    height: double.infinity,
-                    margin: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        color: appTheme(context).accentColor,
-                        shape: BoxShape.circle),
-                    child: FittedBox(
-                      child: Icon(Icons.menu,
-                          color: appTheme(context).additionalColor1),
-                    ),
-                  ),
-                ),
-              ),
+              child: MMenuButton(),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class MMenuButton extends StatefulWidget {
+  const MMenuButton({super.key});
+
+  @override
+  State<MMenuButton> createState() => _MMenuButtonState();
+}
+
+class _MMenuButtonState extends State<MMenuButton> {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Scaffold.of(context).openEndDrawer();
+      },
+      child: Container(
+        margin: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+            color: appTheme(context).tertiaryColor, shape: BoxShape.circle),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          width: double.infinity,
+          height: double.infinity,
+          margin: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+              color: appTheme(context).accentColor, shape: BoxShape.circle),
+          child: FittedBox(
+            child: Icon(
+              Icons.menu,
+              color: context.watch<ConnectStatus>().status
+                  ? Color.fromARGB(255, 64, 255, 57)
+                  : Color.fromARGB(255, 255, 80, 57),
+            ),
+          ),
         ),
       ),
     );
@@ -816,7 +868,7 @@ class _FileContainerState extends State<FileContainer> {
                 shape: BoxShape.circle,
                 border: Border.all(color: appTheme(context).accentColor),
               ),
-              child: Icon(Icons.close),
+              child: const Icon(Icons.close),
             ),
           ),
         ),
