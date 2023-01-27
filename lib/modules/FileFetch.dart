@@ -1,12 +1,49 @@
+import 'dart:convert';
+import 'dart:html';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/data/AnalysisTextData.dart';
+import 'package:flutter_univ/data/FileData.dart';
 import 'package:flutter_univ/data/RowTableData.dart';
 import 'package:flutter_univ/modules/AnalysisFetch.dart';
 import 'package:http/http.dart' as http;
 
 import '../data/UserData.dart';
 
-Future<dynamic> fileFetch(String name) async {
+Future<dynamic> saveFileFetch(String docName, String docBytes) async {
+  var userData = UserData_Singleton();
+  var response = await http.post(
+    Uri.parse('http://localhost:8080/FSB/api/doc'),
+    headers: {
+      "Content-type": "application/json",
+      "Accept": "application/json",
+      "Token": userData.token,
+    },
+    body: jsonEncode(<String, String>{
+      'doc_name': docName,
+      'doc_bytes': docBytes,
+      'userid': userData.id
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    var data = response.body;
+    var msg = jsonDecode(data)["Msg"];
+    var replace = jsonDecode(data)["Replace"];
+
+    if (msg != '') {
+      print(msg);
+      throw Exception(msg);
+    }
+
+    return replace;
+  } else {
+    print(response.statusCode);
+    throw Exception(response.statusCode);
+  }
+}
+
+Future<dynamic> getFileFetch(String name) async {
   var userData = UserData_Singleton();
 
   var response = await http
@@ -14,12 +51,70 @@ Future<dynamic> fileFetch(String name) async {
     "Content-type": "application/json",
     "Accept": "application/json",
     "Token": userData.token,
+    "UserID": userData.id
   });
 
   if (response.statusCode == 200) {
     var data = response.body;
+    var msg = jsonDecode(data)["Msg"];
 
-    return '';
+    print(data);
+
+    if (msg != '') {
+      print(msg);
+      throw Exception(msg);
+    }
+
+    final docData = DocData.fromJson(jsonDecode(data));
+    print(docData.rows);
+
+    // final fileData = FileData.fromJson(jsonDecode(data));
+
+    // if (fileData.msg != null) throw Exception(fileData.msg);
+
+    // print(fileData.name);
+    // print(fileData.bytes);
+
+    // final buffer = fileData.bytes;
+    // File(fileData.bytes).writeAsBytes(
+    //   buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+
+    // File file = fileData.bytes
+    // final rawData = file.readAsBytesSync();
+    // final content = base64Encode(rawData);
+    // final anchor = AnchorElement(
+    //     href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+    //   ..setAttribute("download", "file.txt")
+    //   ..click();
+
+    return docData;
+  } else {
+    print(response.statusCode);
+    throw Exception(response.statusCode);
+  }
+}
+
+Future<dynamic> rewriteFileFetch(String docName) async {
+  var userData = UserData_Singleton();
+
+  var response = await http
+      .put(Uri.parse('http://localhost:8080/FSB/api/doc/$docName'), headers: {
+    "Content-type": "application/json",
+    "Accept": "application/json",
+    "Token": userData.token,
+    "UserID": userData.id
+  });
+
+  if (response.statusCode == 200) {
+    var data = response.body;
+    var msg = jsonDecode(data)["Msg"];
+
+    if (msg != '') {
+      print(msg);
+      throw Exception(msg);
+    }
+
+    return "";
   } else {
     print(response.statusCode);
     throw Exception(response.statusCode);

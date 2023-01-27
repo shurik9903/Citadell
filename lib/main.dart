@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/data/UserData.dart';
+import 'package:flutter_univ/modules/FileFetch.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
 import 'package:provider/provider.dart';
 
@@ -167,7 +168,7 @@ class _DrawerMenuState extends State<DrawerMenu> {
             )),
         ListTile(
           title: Text("Сохранить данные"),
-          onTap: () {},
+          onTap: () async {},
         ),
         ListTile(
           title: Text("Загрузить данные"),

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/data/FileData.dart';
 import 'package:flutter_univ/modules/ConnectionFetch.dart';
 import 'package:flutter_univ/modules/DictionaryFetch.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import '../data/UserData.dart';
 import '../main.dart';
 import '../modules/FileFetch.dart';
 import '../theme/AppThemeDefault.dart';
+import '../widgets/DialogWindow.dart';
 
 class OpenFiles extends ChangeNotifier {
   List<FileContainer> _openFile = [];
@@ -264,46 +266,128 @@ class _MFileViewState extends State<MFileView> {
                         FilePickerResult? result =
                             await FilePicker.platform.pickFiles();
 
-                        if (result != null) {
-                          PlatformFile file = result.files.first;
+                        try {
+                          if (result != null) {
+                            PlatformFile file = result.files.first;
 
-                          print(file.name);
-                          // print(file.bytes);
-                          // print(file.size);
-                          // print(file.extension);
-                          // print(file.path);
+                            print(file.name);
+                            // print(file.bytes);
+                            // print(file.size);
+                            // print(file.extension);
+                            // print(file.path);
 
-                          fileFetch(file.name).then((value) {
-                            print("File OK");
-                            context.read<FileRow>().fileRow = testData
-                                .map((data) => buildTableRow(
-                                    number: data.number ?? "",
-                                    type: data.type ?? "",
-                                    source: data.source ?? "",
-                                    contentText: data.contentText ?? "",
-                                    originalText: data.originalText ?? "",
-                                    date: data.date ?? "",
-                                    analyzedText: [],
-                                    probability: data.probability ?? ""))
-                                .toList();
+                            bool read = true;
 
-                            context.read<OpenFiles>().addFile(FileContainer(
-                                key: () {
-                                  var r = Random();
+                            await saveFileFetch(
+                                    file.name, file.bytes.toString())
+                                .then((value) async {
+                              print(value);
 
-                                  return Key(String.fromCharCodes(List.generate(
-                                      10, (index) => r.nextInt(33) + 89)));
-                                }(),
-                                name: file.name));
-                          }).catchError((error) {
-                            setState(() {
+                              if (value == "true") {
+                                await showReplaceDialogWindow(
+                                        context, file.name)
+                                    .then((value) async {
+                                  if (value as String == "rewrite") {
+                                    await rewriteFileFetch(file.name)
+                                        .then((value) {})
+                                        .catchError((error) {
+                                      read = false;
+                                      print(error);
+                                      return;
+                                    });
+                                  }
+
+                                  if (value == "cancel") {
+                                    read = false;
+                                    return;
+                                  }
+                                }).catchError((error) {
+                                  read = false;
+                                  print(error);
+                                  return;
+                                });
+                              }
+
+                              print("File Save OK");
+                            }).catchError((error) {
+                              read = false;
                               print(error.toString());
+                              // setState(() {
                               // msg = error.toString();
+                              // });
+                              return;
                             });
-                          });
-                        } else {
-                          print("Не удалось открыть файл");
-                          // User canceled the picker
+
+                            print(read);
+                            if (read) {
+                              await getFileFetch(file.name).then((docData) {
+                                print("File OK");
+                                // context.read<FileRow>().fileRow = testData
+                                //     .map((data) => buildTableRow(
+                                //         number: data.number ?? "",
+                                //         type: data.type ?? "",
+                                //         source: data.source ?? "",
+                                //         contentText: data.contentText ?? "",
+                                //         originalText: data.originalText ?? "",
+                                //         date: data.date ?? "",
+                                //         analyzedText: [],
+                                //         probability: data.probability ?? ""))
+                                //     .toList();
+
+                                if (docData is DocData) {
+                                  List<DataRow> dataRow = [];
+
+                                  docData.rows?.forEach((key, value) {
+                                    if (value is List) {
+                                      if (value.length >= 5) {
+                                        dataRow.add(buildTableRow(
+                                            number: key,
+                                            type: value[0],
+                                            source: value[1],
+                                            contentText: value[2],
+                                            originalText: value[3],
+                                            date: value[4]));
+                                      }
+                                      // else {
+                                      //   throw Exception(
+                                      //       "Файл поврежден и не может быть прочитан.");
+                                      // }
+                                    }
+                                    // else {
+                                    //   throw Exception(
+                                    //       "Файл поврежден и не может быть прочитан.");
+                                    // }
+                                  });
+
+                                  context.read<FileRow>().fileRow = dataRow;
+                                } else {
+                                  throw Exception(
+                                      "Файл поврежден и не может быть прочитан.");
+                                }
+
+                                context.read<OpenFiles>().addFile(FileContainer(
+                                    key: () {
+                                      var r = Random();
+
+                                      return Key(String.fromCharCodes(
+                                          List.generate(10,
+                                              (index) => r.nextInt(33) + 89)));
+                                    }(),
+                                    name: file.name));
+                              }).catchError((error) {
+                                setState(() {
+                                  print(error.toString());
+                                  return;
+                                  // msg = error.toString();
+                                });
+                              });
+                            }
+                          } else {
+                            throw Exception("Не удалось открыть файл");
+                          }
+                        } catch (error) {
+                          print(error.toString());
+                          return;
                         }
                       },
                       child: const SizedBox(
@@ -767,7 +851,7 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
       heightFactor: 0.95,
       child: GestureDetector(
         onTap: () {
-          fileFetch("testid").then((value) {
+          getFileFetch("testid").then((value) {
             print("Analysis OK");
 
             context.read<FileRow>().fileRow = testDataAnalysis
