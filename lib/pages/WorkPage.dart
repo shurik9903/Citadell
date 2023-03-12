@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_univ/data/FileData.dart';
 import 'package:flutter_univ/modules/ConnectionFetch.dart';
 import 'package:flutter_univ/modules/DictionaryFetch.dart';
@@ -13,29 +14,157 @@ import '../modules/FileFetch.dart';
 import '../theme/AppThemeDefault.dart';
 import '../widgets/DialogWindow.dart';
 
-class OpenFiles extends ChangeNotifier {
-  List<FileContainer> _openFile = [];
+class SelectFile {
+  late String _name = "";
+  late int _start = 1;
+  late int _numberRows = 1;
+  late FileContainer _selectFile;
 
-  set openFile(List<FileContainer> openFile) {
+  SelectFile(
+      {required String name,
+      required int start,
+      required int numberRows,
+      required FileContainer selectFile}) {
+    _numberRows = numberRows;
+    _name = name;
+    _start = start;
+    _selectFile = selectFile;
+  }
+
+  set name(String name) {
+    _name = name;
+  }
+
+  String get name => _name;
+
+  set numberRows(int numberRows) {
+    _numberRows = numberRows;
+  }
+
+  int get numberRows => _numberRows;
+
+  set start(int start) {
+    if (start < 1)
+      _start = 1;
+    else
+      _start = start;
+  }
+
+  int get start => _start;
+
+  set selectFile(FileContainer fileContainer) {
+    _selectFile = fileContainer;
+  }
+
+  FileContainer get selectFile => _selectFile;
+}
+
+class OpenFiles extends ChangeNotifier {
+  List<SelectFile> _openFile = [];
+  SelectFile? _selectFile;
+
+  set openFile(List<SelectFile> openFile) {
     _openFile = openFile;
     notifyListeners();
   }
 
-  void addFile(FileContainer openFile) {
-    _openFile.add(openFile);
+  List<SelectFile> get openFile => _openFile;
+
+  set selectedFile(SelectFile? fileContainer) {
+    _selectFile = fileContainer;
     notifyListeners();
   }
 
-  void removeFile(Key? keyFile) {
+  SelectFile? get selectedFile => _selectFile;
+
+  void addFile(SelectFile openFile) {
+    _openFile.add(openFile);
+    _selectFile = openFile;
+    notifyListeners();
+  }
+
+  Future<void> removeFile(Key? keyFile, BuildContext context) async {
     if (keyFile != null) {
+      List<SelectFile> cope_file = _openFile
+          .where((element) => element.selectFile.key != keyFile)
+          .toList();
+
+      if (cope_file.isEmpty) {
+        selectedFile = null;
+      } else {
+        selectedFile = cope_file.last;
+      }
+
+      await refreshData(context);
+
       _openFile.removeWhere(
-        (element) => element.key == keyFile,
+        (element) => element.selectFile.key == keyFile,
       );
+
       notifyListeners();
     }
   }
 
-  List<FileContainer> get openFile => _openFile;
+  Future<void> refreshData(BuildContext context) async {
+    if (selectedFile == null) {
+      context.read<FileRow>().fileRow = [];
+      return;
+    }
+
+    await getFileFetch(selectedFile?.name ?? "",
+            start: selectedFile?.start ?? 1,
+            diapason: context.read<NumberRow>().numberRow)
+        .then((docData) {
+      print("File OK");
+
+      if (docData is DocData) {
+        List<DataRow> dataRow = [];
+
+        docData.rows?.forEach((key, value) {
+          if (value is List) {
+            if (value.length >= 5) {
+              dataRow.add(buildTableRow(
+                  number: value[0],
+                  type: value[1],
+                  source: value[2],
+                  contentText: value[3],
+                  originalText: value[4],
+                  date: value[5]));
+            } else {
+              throw Exception(
+                  "File Error 1: Файл поврежден и не может быть прочитан.");
+            }
+          } else {
+            throw Exception(
+                "File Error 2: Файл поврежден и не может быть прочитан.");
+          }
+        });
+
+        context.read<FileRow>().fileRow = dataRow;
+      } else {
+        throw Exception(
+            "File Error 3: Файл поврежден и не может быть прочитан.");
+      }
+    }).catchError((error) {
+      context.read<FileRow>().fileRow = [];
+      print(error.toString());
+      return;
+    });
+  }
+
+  void selectFile(Key? keyFile, BuildContext context) {
+    if (keyFile != null) {
+      List<SelectFile> selectFiles = _openFile
+          .where((element) => element.selectFile.key == keyFile)
+          .toList();
+
+      if (selectFiles.isEmpty) return;
+
+      selectedFile = selectFiles.first;
+
+      refreshData(context);
+    }
+  }
 }
 
 class FileRow extends ChangeNotifier {
@@ -47,6 +176,17 @@ class FileRow extends ChangeNotifier {
   }
 
   List<DataRow> get fileRow => _fileRow;
+}
+
+class NumberRow extends ChangeNotifier {
+  int _numberRow = 25;
+
+  set numberRow(int numberRow) {
+    _numberRow = numberRow;
+    notifyListeners();
+  }
+
+  int get numberRow => _numberRow;
 }
 
 class DictioneryText extends ChangeNotifier {
@@ -83,6 +223,7 @@ class _WorkPageState extends State<WorkPage> {
   final OpenFiles _openFile = OpenFiles();
   final DictioneryText _dictioneryText = DictioneryText();
   // bool viewMenu = true;
+  final NumberRow _numberRow = NumberRow();
   TypeViewMenu _typeViewMenu = TypeViewMenu();
 
   @override
@@ -109,6 +250,9 @@ class _WorkPageState extends State<WorkPage> {
         ),
         ChangeNotifierProvider(
           create: (context) => _typeViewMenu,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => _numberRow,
         ),
       ],
       builder: (context, child) {
@@ -254,7 +398,10 @@ class _MFileViewState extends State<MFileView> {
                         controller: controller,
                         scrollDirection: Axis.horizontal,
                         children: [
-                          ...context.watch<OpenFiles>().openFile,
+                          ...context
+                              .watch<OpenFiles>()
+                              .openFile
+                              .map((e) => e.selectFile),
                         ],
                       ),
                     ),
@@ -320,7 +467,11 @@ class _MFileViewState extends State<MFileView> {
 
                             print(read);
                             if (read) {
-                              await getFileFetch(file.name).then((docData) {
+                              await getFileFetch(file.name,
+                                      start: 1,
+                                      diapason:
+                                          context.read<NumberRow>().numberRow)
+                                  .then((docData) {
                                 print("File OK");
                                 // context.read<FileRow>().fileRow = testData
                                 //     .map((data) => buildTableRow(
@@ -341,12 +492,12 @@ class _MFileViewState extends State<MFileView> {
                                     if (value is List) {
                                       if (value.length >= 5) {
                                         dataRow.add(buildTableRow(
-                                            number: key,
-                                            type: value[0],
-                                            source: value[1],
-                                            contentText: value[2],
-                                            originalText: value[3],
-                                            date: value[4]));
+                                            number: value[0],
+                                            type: value[1],
+                                            source: value[2],
+                                            contentText: value[3],
+                                            originalText: value[4],
+                                            date: value[5]));
                                       }
                                       // else {
                                       //   throw Exception(
@@ -365,15 +516,24 @@ class _MFileViewState extends State<MFileView> {
                                       "Файл поврежден и не может быть прочитан.");
                                 }
 
-                                context.read<OpenFiles>().addFile(FileContainer(
-                                    key: () {
-                                      var r = Random();
+                                FileContainer fileContainer = FileContainer(
+                                  key: () {
+                                    var r = Random();
 
-                                      return Key(String.fromCharCodes(
-                                          List.generate(10,
-                                              (index) => r.nextInt(33) + 89)));
-                                    }(),
-                                    name: file.name));
+                                    return Key(String.fromCharCodes(
+                                        List.generate(10,
+                                            (index) => r.nextInt(33) + 89)));
+                                  }(),
+                                  name: file.name,
+                                );
+
+                                SelectFile selectFile = SelectFile(
+                                    name: file.name,
+                                    start: 1,
+                                    numberRows: docData.rowNumber ?? 0,
+                                    selectFile: fileContainer);
+
+                                context.read<OpenFiles>().addFile(selectFile);
                               }).catchError((error) {
                                 setState(() {
                                   print(error.toString());
@@ -411,8 +571,34 @@ class MTableView extends StatefulWidget {
 }
 
 class _MTableViewState extends State<MTableView> {
+  int _selectId = 1;
+  int _lastPage = 0;
+
+  TextEditingController page = TextEditingController();
+
+  setSelectedID(int selectId) {
+    setState(() {
+      _selectId = selectId;
+    });
+  }
+
+  setLastPage(int lastPage) {
+    setState(() {
+      _lastPage = lastPage;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    page.text = (((context.watch<OpenFiles>().selectedFile?.start ?? -1) + 1) /
+            context.watch<NumberRow>().numberRow)
+        .ceil()
+        .toString();
+
+    setLastPage(((context.watch<OpenFiles>().selectedFile?.numberRows ?? 0) /
+            context.watch<NumberRow>().numberRow)
+        .ceil());
+
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -422,32 +608,255 @@ class _MTableViewState extends State<MTableView> {
           Radius.circular(15),
         ),
       ),
-      child: FractionallySizedBox(
-        widthFactor: 1,
-        heightFactor: 1,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: DataTable(
-            horizontalMargin: 0,
-            columnSpacing: 0,
-            columns: [
-              ...buildTableColumns([
-                "№",
-                "Тип",
-                "Источник",
-                "Содержание сообщения",
-                "Оригинал сообщения",
-                "Дата",
-                "Анализированное сообщение",
-                "Вероятность",
-                "Обновить",
-                "Выделение"
-              ], context)
-            ],
-            rows: [...context.watch<FileRow>().fileRow],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Expanded(
+            flex: 25,
+            child: FractionallySizedBox(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: DataTable(
+                  horizontalMargin: 0,
+                  columnSpacing: 0,
+                  columns: [
+                    ...buildTableColumns([
+                      "№",
+                      "Тип",
+                      "Источник",
+                      "Содержание сообщения",
+                      "Оригинал сообщения",
+                      "Дата",
+                      "Анализированное сообщение",
+                      "Вероятность",
+                      "Обновить",
+                      "Выделение"
+                    ], context)
+                  ],
+                  rows: [...context.watch<FileRow>().fileRow],
+                ),
+              ),
+            ),
           ),
-        ),
+          Expanded(
+              flex: 1,
+              child: Container(
+                margin: const EdgeInsets.only(
+                    left: 20, bottom: 10, top: 10, right: 20),
+                height: double.infinity,
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Wrap(
+                        direction: Axis.horizontal,
+                        crossAxisAlignment: WrapCrossAlignment.start,
+                        spacing: 10,
+                        children: [
+                          MSelectedText(
+                            thisId: 1,
+                            selectId: _selectId,
+                            text: "25",
+                            callback: () {
+                              setSelectedID(1);
+                              context.read<NumberRow>().numberRow = 25;
+                              context.read<OpenFiles>().refreshData(context);
+                            },
+                          ),
+                          MSelectedText(
+                            thisId: 2,
+                            selectId: _selectId,
+                            text: "50",
+                            callback: () {
+                              setSelectedID(2);
+                              context.read<NumberRow>().numberRow = 50;
+                              context.read<OpenFiles>().refreshData(context);
+                            },
+                          ),
+                          MSelectedText(
+                            thisId: 3,
+                            selectId: _selectId,
+                            text: "100",
+                            callback: () {
+                              setSelectedID(3);
+                              context.read<NumberRow>().numberRow = 100;
+                              context.read<OpenFiles>().refreshData(context);
+                            },
+                          ),
+                        ],
+                      ),
+                      Wrap(
+                        spacing: 5,
+                        direction: Axis.horizontal,
+                        // crossAxisAlignment: WrapCrossAlignment.start,
+                        // alignment: WrapAlignment.center,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              int start = context
+                                      .read<OpenFiles>()
+                                      .selectedFile
+                                      ?.start ??
+                                  1;
+
+                              if (start == 1) return;
+
+                              int start_difference =
+                                  start - context.read<NumberRow>().numberRow;
+
+                              if (start_difference < 1) {
+                                context.read<OpenFiles>().selectedFile?.start =
+                                    1;
+                                context.read<OpenFiles>().refreshData(context);
+
+                                return;
+                              }
+
+                              context.read<OpenFiles>().selectedFile?.start =
+                                  start_difference;
+                              context.read<OpenFiles>().refreshData(context);
+                            },
+                            child: const Text("<"),
+                          ),
+                          Container(
+                            width: 25,
+                            child: TextField(
+                              onSubmitted: (value) {
+                                int actual_page = ((context
+                                                .read<OpenFiles>()
+                                                .selectedFile
+                                                ?.start ??
+                                            0) /
+                                        context.read<NumberRow>().numberRow)
+                                    .ceil();
+
+                                if (int.tryParse(value) != null) {
+                                  int setPage = int.parse(value);
+                                  if (0 > setPage || setPage > _lastPage) {
+                                    page.text = actual_page.toString();
+                                    return;
+                                  }
+
+                                  context
+                                      .read<OpenFiles>()
+                                      .selectedFile
+                                      ?.start = ((setPage - 1) *
+                                          context.read<NumberRow>().numberRow) +
+                                      1;
+
+                                  context
+                                      .read<OpenFiles>()
+                                      .refreshData(context);
+
+                                  return;
+                                }
+
+                                page.text = actual_page.toString();
+                              },
+                              controller: page,
+                              textAlign: TextAlign.right,
+                              style: TextStyle(fontSize: 14),
+                              decoration: InputDecoration(
+                                contentPadding: EdgeInsets.only(top: 4),
+                                isDense: true,
+                                border: InputBorder.none,
+                              ),
+                            ),
+                          ),
+                          Text("/ $_lastPage"),
+                          TextButton(
+                            onPressed: () {
+                              int start = context
+                                      .read<OpenFiles>()
+                                      .selectedFile
+                                      ?.start ??
+                                  1;
+
+                              if (start ==
+                                  context
+                                      .read<OpenFiles>()
+                                      .selectedFile
+                                      ?.numberRows) return;
+
+                              int start_difference =
+                                  start + context.read<NumberRow>().numberRow;
+
+                              if (start_difference >
+                                  (context
+                                          .read<OpenFiles>()
+                                          .selectedFile
+                                          ?.numberRows ??
+                                      0)) {
+                                return;
+                              }
+
+                              context.read<OpenFiles>().selectedFile?.start =
+                                  start_difference;
+                              context.read<OpenFiles>().refreshData(context);
+                            },
+                            child: const Text(">"),
+                          ),
+                        ],
+                      ),
+                      Text(
+                          "Кол-во строк: ${context.watch<OpenFiles>().selectedFile?.numberRows ?? 0}"),
+                    ],
+                  ),
+                ),
+              ))
+        ],
       ),
+    );
+  }
+}
+
+class MSelectedText extends StatefulWidget {
+  int selectId;
+  int thisId;
+  String text;
+  Function? callback;
+
+  MSelectedText(
+      {super.key,
+      required this.selectId,
+      required this.text,
+      required this.thisId,
+      this.callback});
+
+  @override
+  State<MSelectedText> createState() => _MSelectedTextState();
+}
+
+class _MSelectedTextState extends State<MSelectedText> {
+  int _selectId = -1;
+  late int _thisId;
+  late String _text;
+  late Function _callback;
+
+  @override
+  void initState() {
+    super.initState();
+    _text = widget.text;
+    _thisId = widget.thisId;
+    _callback = widget.callback ?? () {};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _selectId = widget.selectId;
+    return GestureDetector(
+      child: Text(
+        style: TextStyle(
+            color: _selectId == _thisId ? Colors.white : Colors.blue,
+            decoration: TextDecoration.underline),
+        _text,
+      ),
+      onTap: () => _callback(),
     );
   }
 }
@@ -957,6 +1366,7 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
 
 class FileContainer extends StatefulWidget {
   String name;
+
   FileContainer({required super.key, required this.name});
 
   @override
@@ -965,9 +1375,13 @@ class FileContainer extends StatefulWidget {
 
 class _FileContainerState extends State<FileContainer> {
   late String name;
+  late Key? selectKey;
+  late Function callback;
+
   @override
   void initState() {
     super.initState();
+
     setState(() {
       name = widget.name;
     });
@@ -978,22 +1392,31 @@ class _FileContainerState extends State<FileContainer> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-            padding: const EdgeInsets.all(20),
-            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-                color: appTheme(context).secondaryColor,
-                border: Border.all(color: appTheme(context).accentColor),
-                borderRadius: const BorderRadius.all(Radius.circular(5))),
-            child: Text(name)),
+        GestureDetector(
+          onTap: () {
+            context.read<OpenFiles>().selectFile(widget.key, context);
+          },
+          child: Container(
+              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                  color:
+                      context.watch<OpenFiles>().selectedFile?.selectFile.key ==
+                              widget.key
+                          ? appTheme(context).tertiaryColor
+                          : appTheme(context).secondaryColor,
+                  border: Border.all(color: appTheme(context).accentColor),
+                  borderRadius: const BorderRadius.all(Radius.circular(5))),
+              child: Text(name)),
+        ),
         Positioned(
           top: 5,
           right: 0,
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () {
-              context.read<OpenFiles>().removeFile(widget.key);
+              context.read<OpenFiles>().removeFile(widget.key, context);
             },
             child: Container(
               decoration: BoxDecoration(

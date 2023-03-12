@@ -43,16 +43,19 @@ Future<dynamic> saveFileFetch(String docName, String docBytes) async {
   }
 }
 
-Future<dynamic> getFileFetch(String name) async {
+Future<dynamic> getFileFetch(String name,
+    {int start = 1, diapason = 25}) async {
   var userData = UserData_Singleton();
 
-  var response = await http
-      .get(Uri.parse('http://localhost:8080/FSB/api/doc/$name'), headers: {
-    "Content-type": "application/json",
-    "Accept": "application/json",
-    "Token": userData.token,
-    "UserID": userData.id
-  });
+  var response = await http.get(
+      Uri.parse(
+          'http://localhost:8080/FSB/api/doc?name=$name&start=$start&diapason=$diapason'),
+      headers: {
+        "Content-type": "application/json",
+        "Accept": "application/json",
+        "Token": userData.token,
+        "UserID": userData.id
+      });
 
   if (response.statusCode == 200) {
     var data = response.body;
@@ -66,7 +69,7 @@ Future<dynamic> getFileFetch(String name) async {
     }
 
     final docData = DocData.fromJson(jsonDecode(data));
-    print(docData.rows);
+    // print(docData.rows);
 
     // final fileData = FileData.fromJson(jsonDecode(data));
 
@@ -97,13 +100,14 @@ Future<dynamic> getFileFetch(String name) async {
 Future<dynamic> rewriteFileFetch(String docName) async {
   var userData = UserData_Singleton();
 
-  var response = await http
-      .put(Uri.parse('http://localhost:8080/FSB/api/doc/$docName'), headers: {
-    "Content-type": "application/json",
-    "Accept": "application/json",
-    "Token": userData.token,
-    "UserID": userData.id
-  });
+  var response = await http.put(
+      Uri.parse('http://localhost:8080/FSB/api/doc?name=$docName'),
+      headers: {
+        "Content-type": "application/json",
+        "Accept": "application/json",
+        "Token": userData.token,
+        "UserID": userData.id
+      });
 
   if (response.statusCode == 200) {
     var data = response.body;

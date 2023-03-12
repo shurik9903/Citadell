@@ -21,7 +21,7 @@ class DocData {
   DocData({this.msg, this.rowNumber, this.rows});
 
   final String? msg;
-  final String? rowNumber;
+  final int? rowNumber;
   final Map<String, dynamic>? rows;
 
   factory DocData.fromJson(Map<String, dynamic> data) {
@@ -31,6 +31,7 @@ class DocData {
     final rowNumber = docData?["RowNumber"] as String?;
     final rows = jsonDecode(docData?["Rows"]) as Map<String, dynamic>?;
 
-    return DocData(msg: msg, rowNumber: rowNumber, rows: rows);
+    return DocData(
+        msg: msg, rowNumber: int.parse(rowNumber ?? "0"), rows: rows);
   }
 }
