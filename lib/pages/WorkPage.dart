@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_univ/data/FileData.dart';
 import 'package:flutter_univ/modules/ConnectionFetch.dart';
 import 'package:flutter_univ/modules/DictionaryFetch.dart';
+import 'package:flutter_univ/modules/RabbitFetch.dart';
 import 'package:provider/provider.dart';
 import '../data/UserData.dart';
 import '../main.dart';
@@ -1260,79 +1261,85 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
       heightFactor: 0.95,
       child: GestureDetector(
         onTap: () {
-          getFileFetch("testid").then((value) {
-            print("Analysis OK");
-
-            context.read<FileRow>().fileRow = testDataAnalysis
-                .map((data) => buildTableRow(
-                    number: data.number ?? "",
-                    type: data.type ?? "",
-                    source: data.source ?? "",
-                    contentText: data.contentText ?? "",
-                    originalText: data.originalText ?? "",
-                    date: data.date ?? "",
-                    analyzedText: [
-                      ...?data.analyzedText
-                          ?.map(
-                            (element) => TextSpan(
-                              recognizer: element.type != null
-                                  ? (TapGestureRecognizer()
-                                    ..onTap = () {
-                                      dictionaryFetch(element.text ?? "")
-                                          .then((value) {
-                                        print("Dictionary OK");
-                                        print(element.text);
-
-                                        context.read<TypeViewMenu>().show =
-                                            false;
-
-                                        context
-                                            .read<DictioneryText>()
-                                            .dictText = [
-                                          TextSpan(
-                                            text: "${element.text} - ",
-                                            style: TextStyle(
-                                              color: element.type == null
-                                                  ? appTheme(context).textColor1
-                                                  : element.type?.typeColor,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: testWord[element.text
-                                                    ?.toLowerCase()
-                                                    .replaceAll(' ', '')] ??
-                                                "",
-                                            style: TextStyle(
-                                              color: element.type == null
-                                                  ? appTheme(context).textColor1
-                                                  : element.type?.typeColor,
-                                            ),
-                                          )
-                                        ];
-                                      }).catchError((error) {
-                                        setState(() {
-                                          print(error.toString());
-                                        });
-                                      });
-                                    })
-                                  : null,
-                              text: element.text,
-                              style: TextStyle(
-                                color: element.type == null
-                                    ? appTheme(context).textColor1
-                                    : element.type?.typeColor,
-                              ),
-                            ),
-                          )
-                          .toList()
-                    ],
-                    probability: data.probability ?? ""))
-                .toList();
+          rabbitFetch().then((value) {
+            print(value);
           }).catchError((error) {
-            setState(() {
-              print(error.toString());
-            });
+            print(error.toString());
           });
+
+          // getFileFetch("testid").then((value) {
+          //   print("Analysis OK");
+
+          //   context.read<FileRow>().fileRow = testDataAnalysis
+          //       .map((data) => buildTableRow(
+          //           number: data.number ?? "",
+          //           type: data.type ?? "",
+          //           source: data.source ?? "",
+          //           contentText: data.contentText ?? "",
+          //           originalText: data.originalText ?? "",
+          //           date: data.date ?? "",
+          //           analyzedText: [
+          //             ...?data.analyzedText
+          //                 ?.map(
+          //                   (element) => TextSpan(
+          //                     recognizer: element.type != null
+          //                         ? (TapGestureRecognizer()
+          //                           ..onTap = () {
+          //                             dictionaryFetch(element.text ?? "")
+          //                                 .then((value) {
+          //                               print("Dictionary OK");
+          //                               print(element.text);
+
+          //                               context.read<TypeViewMenu>().show =
+          //                                   false;
+
+          //                               context
+          //                                   .read<DictioneryText>()
+          //                                   .dictText = [
+          //                                 TextSpan(
+          //                                   text: "${element.text} - ",
+          //                                   style: TextStyle(
+          //                                     color: element.type == null
+          //                                         ? appTheme(context).textColor1
+          //                                         : element.type?.typeColor,
+          //                                   ),
+          //                                 ),
+          //                                 TextSpan(
+          //                                   text: testWord[element.text
+          //                                           ?.toLowerCase()
+          //                                           .replaceAll(' ', '')] ??
+          //                                       "",
+          //                                   style: TextStyle(
+          //                                     color: element.type == null
+          //                                         ? appTheme(context).textColor1
+          //                                         : element.type?.typeColor,
+          //                                   ),
+          //                                 )
+          //                               ];
+          //                             }).catchError((error) {
+          //                               setState(() {
+          //                                 print(error.toString());
+          //                               });
+          //                             });
+          //                           })
+          //                         : null,
+          //                     text: element.text,
+          //                     style: TextStyle(
+          //                       color: element.type == null
+          //                           ? appTheme(context).textColor1
+          //                           : element.type?.typeColor,
+          //                     ),
+          //                   ),
+          //                 )
+          //                 .toList()
+          //           ],
+          //           probability: data.probability ?? ""))
+          //       .toList();
+          // }).catchError((error) {
+          //   setState(() {
+          //     print(error.toString());
+          //   });
+          // });
         },
         child: Container(
           alignment: Alignment.center,
