@@ -4,12 +4,11 @@ import 'package:http/http.dart' as http;
 Future<dynamic> connectionFetch() async {
   var userData = UserData_Singleton();
 
-  var response =
-      await http.get(Uri.parse('http://localhost:8080/FSB/api/ping'), headers: {
-    "Content-type": "application/json",
-    "Accept": "application/json",
-    "Token": userData.token,
-  });
+  var response = await http.get(Uri.parse('http://localhost:8080/FSB/api/ping'),
+      headers: {
+        "Content-type": "application/json",
+        "Accept": "application/json"
+      });
 
   if (response.statusCode == 200) {
     var data = response.body;
@@ -21,7 +20,7 @@ Future<dynamic> connectionFetch() async {
   }
 }
 
-Future<dynamic> callConnection(callback(bool connect)) async {
+Future<dynamic> callConnection(Function(bool connect) callback) async {
   connectionFetch().then((value) {
     callback(true);
   }).catchError((error) {

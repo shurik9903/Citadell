@@ -17,12 +17,12 @@ Future<dynamic> saveFileFetch(String docName, String docBytes) async {
     headers: {
       "Content-type": "application/json",
       "Accept": "application/json",
-      "Token": userData.token,
+      "token": userData.token,
+      "login": userData.login,
     },
     body: jsonEncode(<String, String>{
       'doc_name': docName,
       'doc_bytes': docBytes,
-      'userid': userData.id
     }),
   );
 
@@ -53,8 +53,8 @@ Future<dynamic> getFileFetch(String name,
       headers: {
         "Content-type": "application/json",
         "Accept": "application/json",
-        "Token": userData.token,
-        "UserID": userData.id
+        "token": userData.token,
+        "login": userData.login,
       });
 
   if (response.statusCode == 200) {
@@ -105,8 +105,8 @@ Future<dynamic> rewriteFileFetch(String docName) async {
       headers: {
         "Content-type": "application/json",
         "Accept": "application/json",
-        "Token": userData.token,
-        "UserID": userData.id
+        "token": userData.token,
+        "login": userData.login,
       });
 
   if (response.statusCode == 200) {

@@ -6,12 +6,13 @@ import '../data/UserData.dart';
 import '../data/LoginData.dart';
 
 Future<dynamic> loginFetch(String login, String password) async {
-  var response = await http.get(
-      Uri.parse('http://localhost:8080/FSB/api/login/$login/$password'),
+  var response = await http.post(
+      Uri.parse('http://localhost:8080/FSB/api/login'),
       headers: {
         "Content-type": "application/json",
         "Accept": "application/json",
-      });
+      },
+      body: jsonEncode(<String, String>{'password': password, 'login': login}));
 
   if (response.statusCode == 200) {
     var data = response.body;
@@ -22,8 +23,7 @@ Future<dynamic> loginFetch(String login, String password) async {
 
     var userData = UserData_Singleton();
 
-    userData.id = loginData.userID ?? '';
-    userData.login = loginData.userLogin ?? '';
+    userData.login = loginData.login ?? '';
     userData.token = loginData.token ?? '';
 
     // return "ok";

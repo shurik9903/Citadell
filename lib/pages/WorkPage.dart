@@ -8,6 +8,7 @@ import 'package:flutter_univ/data/FileData.dart';
 import 'package:flutter_univ/modules/ConnectionFetch.dart';
 import 'package:flutter_univ/modules/DictionaryFetch.dart';
 import 'package:flutter_univ/modules/RabbitFetch.dart';
+import 'package:flutter_univ/modules/WebSocketService.dart';
 import 'package:provider/provider.dart';
 import '../data/UserData.dart';
 import '../main.dart';
@@ -227,12 +228,22 @@ class _WorkPageState extends State<WorkPage> {
   final NumberRow _numberRow = NumberRow();
   TypeViewMenu _typeViewMenu = TypeViewMenu();
 
+  WebSocketService socket = WebSocketServiceFactory.createInstance();
+
   @override
   void initState() {
     super.initState();
     callConnection((connect) {
       context.read<ConnectStatus>().status = connect;
     });
+
+    socket.open();
+  }
+
+  @override
+  void dispose() {
+    socket.close();
+    super.dispose();
   }
 
   @override
@@ -1111,10 +1122,6 @@ class _MUserPanelState extends State<MUserPanel> {
                   children: [
                     Text(
                       userData.login,
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                    Text(
-                      userData.id,
                       style: const TextStyle(fontSize: 20),
                     ),
                   ],

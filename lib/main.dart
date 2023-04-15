@@ -43,6 +43,7 @@ class SelectTheme extends ChangeNotifier {
 }
 
 void main() {
+  UserData_Singleton();
   runApp(const MyApp());
 }
 

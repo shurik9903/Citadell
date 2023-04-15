@@ -11,7 +11,8 @@ Future<dynamic> fileFetch(String docid) async {
       headers: {
         "Content-type": "application/json",
         "Accept": "application/json",
-        "Token": userData.token,
+        "token": userData.token,
+        "login": userData.login,
       });
 
   if (response.statusCode == 200) {

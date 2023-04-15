@@ -1,18 +1,15 @@
 //Класс для хранения данных авторизации
 class LoginData {
-  LoginData({this.msg, this.userID, this.userLogin, this.token});
+  LoginData({this.msg, this.login, this.token});
 
   final String? msg;
-  final String? userID;
-  final String? userLogin;
+  final String? login;
   final String? token;
 
   factory LoginData.fromJson(Map<String, dynamic> data) {
-    final msg = data['Msg'] as String?;
-    final userID = data['UserID'] as String?;
-    final userLogin = data['UserLogin'] as String?;
-    final token = data['Token'] as String?;
-    return LoginData(
-        msg: msg, userID: userID, userLogin: userLogin, token: token);
+    final msg = data['msg'] as String?;
+    final login = data['login'] as String?;
+    final token = data['token'] as String?;
+    return LoginData(msg: msg, login: login, token: token);
   }
 }

@@ -1,25 +1,21 @@
 //абстрактный класс для хранения данных пользователя
+
+import 'package:localstorage/localstorage.dart';
+
 abstract class UserDataBase {
-  String _id = '';
-  String _login = '';
-  String _token = '';
+  final storage = new LocalStorage('userData.json');
 
-  set id(String id) => _id = id;
+  set login(String login) => storage.setItem('login', login);
 
-  String get id => _id;
+  String get login => storage.getItem('login') ?? '';
 
-  set login(String login) => _login = login;
+  set token(String token) => storage.setItem('token', token);
 
-  String get login => _login;
-
-  set token(String token) => _token = token;
-
-  String get token => _token;
+  String get token => storage.getItem('token') ?? '';
 
   void clear() {
-    _id = '';
-    _login = '';
-    _token = '';
+    storage.deleteItem('login');
+    storage.deleteItem('token');
   }
 }
 
