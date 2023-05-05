@@ -1,17 +1,14 @@
 import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_univ/data/FileData.dart';
 import 'package:flutter_univ/modules/ConnectionFetch.dart';
-import 'package:flutter_univ/modules/DictionaryFetch.dart';
-import 'package:flutter_univ/modules/RabbitFetch.dart';
 import 'package:flutter_univ/modules/WebSocketService.dart';
 import 'package:provider/provider.dart';
 import '../data/UserData.dart';
 import '../main.dart';
+import '../modules/AnalysisFetch.dart';
 import '../modules/FileFetch.dart';
 import '../theme/AppThemeDefault.dart';
 import '../widgets/DialogWindow.dart';
@@ -64,6 +61,23 @@ class SelectFile {
 class OpenFiles extends ChangeNotifier {
   List<SelectFile> _openFile = [];
   SelectFile? _selectFile;
+  List<DataRow> _fileRow = [];
+  int _numberRow = 25;
+
+  set fileRow(List<DataRow> fileRow) {
+    _fileRow = fileRow;
+    notifyListeners();
+  }
+
+  List<DataRow> get fileRow => _fileRow;
+
+  set numberRow(int numberRow) {
+    _numberRow = numberRow;
+    refreshData();
+    notifyListeners();
+  }
+
+  int get numberRow => _numberRow;
 
   set openFile(List<SelectFile> openFile) {
     _openFile = openFile;
@@ -85,19 +99,19 @@ class OpenFiles extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> removeFile(Key? keyFile, BuildContext context) async {
+  Future<void> removeFile(Key? keyFile) async {
     if (keyFile != null) {
-      List<SelectFile> cope_file = _openFile
+      List<SelectFile> copeFile = _openFile
           .where((element) => element.selectFile.key != keyFile)
           .toList();
 
-      if (cope_file.isEmpty) {
+      if (copeFile.isEmpty) {
         selectedFile = null;
       } else {
-        selectedFile = cope_file.last;
+        selectedFile = copeFile.last;
       }
 
-      await refreshData(context);
+      await refreshData();
 
       _openFile.removeWhere(
         (element) => element.selectFile.key == keyFile,
@@ -107,21 +121,15 @@ class OpenFiles extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshData(BuildContext context) async {
-    if (selectedFile == null) {
-      context.read<FileRow>().fileRow = [];
-      return;
-    }
-
-    await getFileFetch(selectedFile?.name ?? "",
-            start: selectedFile?.start ?? 1,
-            diapason: context.read<NumberRow>().numberRow)
+  Future<void> addData(String name,
+      {int start = 1, bool newFile = false}) async {
+    return await getDocFetch(name, start: start, diapason: numberRow)
         .then((docData) {
       print("File OK");
 
-      if (docData is DocData) {
-        List<DataRow> dataRow = [];
+      List<DataRow> dataRow = [];
 
+      if (docData is DocData) {
         docData.rows?.forEach((key, value) {
           if (value is List) {
             if (value.length >= 5) {
@@ -141,20 +149,48 @@ class OpenFiles extends ChangeNotifier {
                 "File Error 2: Файл поврежден и не может быть прочитан.");
           }
         });
-
-        context.read<FileRow>().fileRow = dataRow;
       } else {
         throw Exception(
             "File Error 3: Файл поврежден и не может быть прочитан.");
       }
+
+      if (newFile) {
+        FileContainer fileContainer = FileContainer(
+          key: () {
+            var r = Random();
+
+            return Key(String.fromCharCodes(
+                List.generate(10, (index) => r.nextInt(33) + 89)));
+          }(),
+          name: name,
+        );
+
+        SelectFile selectFile = SelectFile(
+            name: name,
+            start: 1,
+            numberRows: docData.rowNumber ?? 0,
+            selectFile: fileContainer);
+
+        addFile(selectFile);
+      }
+
+      fileRow = dataRow;
     }).catchError((error) {
-      context.read<FileRow>().fileRow = [];
       print(error.toString());
-      return;
+      fileRow = [];
     });
   }
 
-  void selectFile(Key? keyFile, BuildContext context) {
+  Future<void> refreshData() async {
+    if (selectedFile == null) {
+      fileRow = [];
+      return;
+    }
+
+    addData(selectedFile?.name ?? "", start: selectedFile?.start ?? 1);
+  }
+
+  Future<void> selectFile(Key? keyFile) async {
     if (keyFile != null) {
       List<SelectFile> selectFiles = _openFile
           .where((element) => element.selectFile.key == keyFile)
@@ -164,31 +200,9 @@ class OpenFiles extends ChangeNotifier {
 
       selectedFile = selectFiles.first;
 
-      refreshData(context);
+      refreshData();
     }
   }
-}
-
-class FileRow extends ChangeNotifier {
-  List<DataRow> _fileRow = [];
-
-  set fileRow(List<DataRow> fileRow) {
-    _fileRow = fileRow;
-    notifyListeners();
-  }
-
-  List<DataRow> get fileRow => _fileRow;
-}
-
-class NumberRow extends ChangeNotifier {
-  int _numberRow = 25;
-
-  set numberRow(int numberRow) {
-    _numberRow = numberRow;
-    notifyListeners();
-  }
-
-  int get numberRow => _numberRow;
 }
 
 class DictioneryText extends ChangeNotifier {
@@ -221,23 +235,33 @@ class WorkPage extends StatefulWidget {
 }
 
 class _WorkPageState extends State<WorkPage> {
-  final FileRow _fileRow = FileRow();
-  final OpenFiles _openFile = OpenFiles();
   final DictioneryText _dictioneryText = DictioneryText();
-  // bool viewMenu = true;
-  final NumberRow _numberRow = NumberRow();
-  TypeViewMenu _typeViewMenu = TypeViewMenu();
+  final TypeViewMenu _typeViewMenu = TypeViewMenu();
 
   WebSocketService socket = WebSocketServiceFactory.createInstance();
 
   @override
   void initState() {
     super.initState();
+
     callConnection((connect) {
       context.read<ConnectStatus>().status = connect;
     });
 
     socket.open();
+
+    socket.sendMessage();
+
+    subscribeDataConnection(socket.connection?.stream);
+
+    // _openFile.fileRow = _fileRow;
+
+    // StreamBuilder(
+    //   stream: socket.connection?.stream,
+    //   builder: ((context, snapshot) {
+    //     return Text(snapshot.hasData ? '${snapshot.data}' : '');
+    //   }),
+    // );
   }
 
   @override
@@ -252,19 +276,10 @@ class _WorkPageState extends State<WorkPage> {
       providers: [
         //Добавление Provider темы в MultiProvider
         ChangeNotifierProvider(
-          create: (context) => _fileRow,
-        ),
-        ChangeNotifierProvider(
-          create: (context) => _openFile,
-        ),
-        ChangeNotifierProvider(
           create: (context) => _dictioneryText,
         ),
         ChangeNotifierProvider(
           create: (context) => _typeViewMenu,
-        ),
-        ChangeNotifierProvider(
-          create: (context) => _numberRow,
         ),
       ],
       builder: (context, child) {
@@ -446,6 +461,10 @@ class _MFileViewState extends State<MFileView> {
                                 await showReplaceDialogWindow(
                                         context, file.name)
                                     .then((value) async {
+                                  if (value as String == null) {
+                                    return;
+                                  }
+
                                   if (value as String == "rewrite") {
                                     await rewriteFileFetch(file.name)
                                         .then((value) {})
@@ -479,80 +498,10 @@ class _MFileViewState extends State<MFileView> {
 
                             print(read);
                             if (read) {
-                              await getFileFetch(file.name,
-                                      start: 1,
-                                      diapason:
-                                          context.read<NumberRow>().numberRow)
-                                  .then((docData) {
-                                print("File OK");
-                                // context.read<FileRow>().fileRow = testData
-                                //     .map((data) => buildTableRow(
-                                //         number: data.number ?? "",
-                                //         type: data.type ?? "",
-                                //         source: data.source ?? "",
-                                //         contentText: data.contentText ?? "",
-                                //         originalText: data.originalText ?? "",
-                                //         date: data.date ?? "",
-                                //         analyzedText: [],
-                                //         probability: data.probability ?? ""))
-                                //     .toList();
-
-                                if (docData is DocData) {
-                                  List<DataRow> dataRow = [];
-
-                                  docData.rows?.forEach((key, value) {
-                                    if (value is List) {
-                                      if (value.length >= 5) {
-                                        dataRow.add(buildTableRow(
-                                            number: value[0],
-                                            type: value[1],
-                                            source: value[2],
-                                            contentText: value[3],
-                                            originalText: value[4],
-                                            date: value[5]));
-                                      }
-                                      // else {
-                                      //   throw Exception(
-                                      //       "Файл поврежден и не может быть прочитан.");
-                                      // }
-                                    }
-                                    // else {
-                                    //   throw Exception(
-                                    //       "Файл поврежден и не может быть прочитан.");
-                                    // }
-                                  });
-
-                                  context.read<FileRow>().fileRow = dataRow;
-                                } else {
-                                  throw Exception(
-                                      "Файл поврежден и не может быть прочитан.");
-                                }
-
-                                FileContainer fileContainer = FileContainer(
-                                  key: () {
-                                    var r = Random();
-
-                                    return Key(String.fromCharCodes(
-                                        List.generate(10,
-                                            (index) => r.nextInt(33) + 89)));
-                                  }(),
-                                  name: file.name,
-                                );
-
-                                SelectFile selectFile = SelectFile(
-                                    name: file.name,
-                                    start: 1,
-                                    numberRows: docData.rowNumber ?? 0,
-                                    selectFile: fileContainer);
-
-                                context.read<OpenFiles>().addFile(selectFile);
-                              }).catchError((error) {
-                                setState(() {
-                                  print(error.toString());
-                                  return;
-                                  // msg = error.toString();
-                                });
-                              });
+                              await context.read<OpenFiles>().addData(
+                                    file.name,
+                                    newFile: true,
+                                  );
                             }
                           } else {
                             throw Exception("Не удалось открыть файл");
@@ -603,12 +552,12 @@ class _MTableViewState extends State<MTableView> {
   @override
   Widget build(BuildContext context) {
     page.text = (((context.watch<OpenFiles>().selectedFile?.start ?? -1) + 1) /
-            context.watch<NumberRow>().numberRow)
+            context.watch<OpenFiles>().numberRow)
         .ceil()
         .toString();
 
     setLastPage(((context.watch<OpenFiles>().selectedFile?.numberRows ?? 0) /
-            context.watch<NumberRow>().numberRow)
+            context.watch<OpenFiles>().numberRow)
         .ceil());
 
     return Container(
@@ -649,7 +598,7 @@ class _MTableViewState extends State<MTableView> {
                       "Выделение"
                     ], context)
                   ],
-                  rows: [...context.watch<FileRow>().fileRow],
+                  rows: [...context.watch<OpenFiles>().fileRow],
                 ),
               ),
             ),
@@ -676,28 +625,24 @@ class _MTableViewState extends State<MTableView> {
                             text: "25",
                             callback: () {
                               setSelectedID(1);
-                              context.read<NumberRow>().numberRow = 25;
-                              context.read<OpenFiles>().refreshData(context);
+                              context.read<OpenFiles>().numberRow = 25;
                             },
                           ),
                           MSelectedText(
-                            thisId: 2,
-                            selectId: _selectId,
-                            text: "50",
-                            callback: () {
-                              setSelectedID(2);
-                              context.read<NumberRow>().numberRow = 50;
-                              context.read<OpenFiles>().refreshData(context);
-                            },
-                          ),
+                              thisId: 2,
+                              selectId: _selectId,
+                              text: "50",
+                              callback: () {
+                                setSelectedID(2);
+                                context.read<OpenFiles>().numberRow = 50;
+                              }),
                           MSelectedText(
                             thisId: 3,
                             selectId: _selectId,
                             text: "100",
                             callback: () {
                               setSelectedID(3);
-                              context.read<NumberRow>().numberRow = 100;
-                              context.read<OpenFiles>().refreshData(context);
+                              context.read<OpenFiles>().numberRow = 100;
                             },
                           ),
                         ],
@@ -719,19 +664,18 @@ class _MTableViewState extends State<MTableView> {
                               if (start == 1) return;
 
                               int start_difference =
-                                  start - context.read<NumberRow>().numberRow;
+                                  start - context.read<OpenFiles>().numberRow;
 
                               if (start_difference < 1) {
                                 context.read<OpenFiles>().selectedFile?.start =
                                     1;
-                                context.read<OpenFiles>().refreshData(context);
-
+                                context.read<OpenFiles>().refreshData();
                                 return;
                               }
 
                               context.read<OpenFiles>().selectedFile?.start =
                                   start_difference;
-                              context.read<OpenFiles>().refreshData(context);
+                              context.read<OpenFiles>().refreshData();
                             },
                             child: const Text("<"),
                           ),
@@ -744,7 +688,7 @@ class _MTableViewState extends State<MTableView> {
                                                 .selectedFile
                                                 ?.start ??
                                             0) /
-                                        context.read<NumberRow>().numberRow)
+                                        context.read<OpenFiles>().numberRow)
                                     .ceil();
 
                                 if (int.tryParse(value) != null) {
@@ -758,13 +702,10 @@ class _MTableViewState extends State<MTableView> {
                                       .read<OpenFiles>()
                                       .selectedFile
                                       ?.start = ((setPage - 1) *
-                                          context.read<NumberRow>().numberRow) +
+                                          context.read<OpenFiles>().numberRow) +
                                       1;
 
-                                  context
-                                      .read<OpenFiles>()
-                                      .refreshData(context);
-
+                                  context.read<OpenFiles>().refreshData();
                                   return;
                                 }
 
@@ -796,7 +737,7 @@ class _MTableViewState extends State<MTableView> {
                                       ?.numberRows) return;
 
                               int start_difference =
-                                  start + context.read<NumberRow>().numberRow;
+                                  start + context.read<OpenFiles>().numberRow;
 
                               if (start_difference >
                                   (context
@@ -809,7 +750,7 @@ class _MTableViewState extends State<MTableView> {
 
                               context.read<OpenFiles>().selectedFile?.start =
                                   start_difference;
-                              context.read<OpenFiles>().refreshData(context);
+                              context.read<OpenFiles>().refreshData();
                             },
                             child: const Text(">"),
                           ),
@@ -1093,7 +1034,7 @@ class MUserPanel extends StatefulWidget {
 class _MUserPanelState extends State<MUserPanel> {
   @override
   Widget build(BuildContext context) {
-    var userData = UserData_Singleton();
+    var userData = UserDataSingleton();
 
     return FractionallySizedBox(
       widthFactor: 0.95,
@@ -1163,14 +1104,12 @@ class _MMenuButtonState extends State<MMenuButton> {
           height: double.infinity,
           margin: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-              color: appTheme(context).accentColor, shape: BoxShape.circle),
-          child: FittedBox(
-            child: Icon(
-              Icons.menu,
               color: context.watch<ConnectStatus>().status
-                  ? Color.fromARGB(255, 64, 255, 57)
-                  : Color.fromARGB(255, 255, 80, 57),
-            ),
+                  ? Color.fromARGB(133, 3, 101, 0)
+                  : Color.fromARGB(99, 129, 15, 0),
+              shape: BoxShape.circle),
+          child: FittedBox(
+            child: Image.asset("lib/images/Coat_Russia.png"),
           ),
         ),
       ),
@@ -1268,11 +1207,13 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
       heightFactor: 0.95,
       child: GestureDetector(
         onTap: () {
-          rabbitFetch().then((value) {
-            print(value);
-          }).catchError((error) {
-            print(error.toString());
-          });
+          fileAnalysisFetch('0').then((value) {}).catchError((error) {});
+
+          // rabbitFetch().then((value) {
+          //   print(value);
+          // }).catchError((error) {
+          //   print(error.toString());
+          // });
 
           // getFileFetch("testid").then((value) {
           //   print("Analysis OK");
@@ -1379,9 +1320,9 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
 }
 
 class FileContainer extends StatefulWidget {
-  String name;
+  final String name;
 
-  FileContainer({required super.key, required this.name});
+  const FileContainer({required super.key, required this.name});
 
   @override
   State<FileContainer> createState() => _FileContainerState();
@@ -1408,7 +1349,7 @@ class _FileContainerState extends State<FileContainer> {
       children: [
         GestureDetector(
           onTap: () {
-            context.read<OpenFiles>().selectFile(widget.key, context);
+            context.read<OpenFiles>().selectFile(widget.key);
           },
           child: Container(
               padding: const EdgeInsets.all(20),
@@ -1430,7 +1371,7 @@ class _FileContainerState extends State<FileContainer> {
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () {
-              context.read<OpenFiles>().removeFile(widget.key, context);
+              context.read<OpenFiles>().removeFile(widget.key);
             },
             child: Container(
               decoration: BoxDecoration(

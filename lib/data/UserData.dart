@@ -3,7 +3,14 @@
 import 'package:localstorage/localstorage.dart';
 
 abstract class UserDataBase {
-  final storage = new LocalStorage('userData.json');
+  final storage = LocalStorage('userData.json');
+  Function? _exitCallback;
+
+  Function? get exitCallback => _exitCallback;
+
+  set exitCallback(Function? exitCallback) {
+    _exitCallback = exitCallback;
+  }
 
   set login(String login) => storage.setItem('login', login);
 
@@ -17,16 +24,22 @@ abstract class UserDataBase {
     storage.deleteItem('login');
     storage.deleteItem('token');
   }
+
+  void exit() {
+    clear();
+    if (exitCallback != null) {
+      exitCallback!();
+    }
+  }
 }
 
 //Singleton конструктор
-class UserData_Singleton extends UserDataBase {
-  static final UserData_Singleton _singleton =
-      UserData_Singleton._constructor();
+class UserDataSingleton extends UserDataBase {
+  static final UserDataSingleton _singleton = UserDataSingleton._constructor();
 
-  factory UserData_Singleton() {
+  factory UserDataSingleton() {
     return _singleton;
   }
 
-  UserData_Singleton._constructor();
+  UserDataSingleton._constructor();
 }

@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../data/Option.dart';
 import '../data/UserData.dart';
 import '../data/LoginData.dart';
 
 Future<dynamic> loginFetch(String login, String password) async {
-  var response = await http.post(
-      Uri.parse('http://localhost:8080/FSB/api/login'),
+  var option = OptionSingleton();
+
+  var response = await http.post(Uri.parse('${option.url}login'),
       headers: {
         "Content-type": "application/json",
         "Accept": "application/json",
@@ -21,15 +23,19 @@ Future<dynamic> loginFetch(String login, String password) async {
 
     if (loginData.msg != null) throw Exception(loginData.msg);
 
-    var userData = UserData_Singleton();
+    var userData = UserDataSingleton();
 
     userData.login = loginData.login ?? '';
     userData.token = loginData.token ?? '';
 
     // return "ok";
     return '';
-  } else {
-    print(response.statusCode);
-    throw Exception(response.statusCode);
   }
+  if (response.statusCode == 401) {
+    UserDataSingleton().exit();
+    return;
+  }
+
+  print(response.statusCode);
+  throw Exception(response.statusCode);
 }

@@ -2,9 +2,13 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../data/Option.dart';
+import '../data/UserData.dart';
+
 Future<dynamic> rabbitFetch() async {
-  var response =
-      await http.get(Uri.parse('http://localhost:8080/FSB/api/test'), headers: {
+  var option = OptionSingleton();
+
+  var response = await http.get(Uri.parse('${option.url}test'), headers: {
     "Content-type": "application/json",
     "Accept": "application/json",
   });
@@ -16,8 +20,12 @@ Future<dynamic> rabbitFetch() async {
 
     // return "ok";
     return '';
-  } else {
-    print(response.statusCode);
-    throw Exception(response.statusCode);
   }
+  if (response.statusCode == 401) {
+    UserDataSingleton().exit();
+    return;
+  }
+
+  print(response.statusCode);
+  throw Exception(response.statusCode);
 }

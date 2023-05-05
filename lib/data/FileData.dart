@@ -2,18 +2,19 @@
 import 'dart:convert';
 
 class FileData {
-  FileData({this.msg, this.name, this.bytes});
+  FileData({this.msg, this.name, this.bytes, this.id});
 
   final String? msg;
   final String? name;
   final List<int>? bytes;
+  final int? id;
 
   factory FileData.fromJson(Map<String, dynamic> data) {
     final msg = data['Msg'] as String?;
-    final name = data['fileName'] as String?;
-    final bytes = data['fileBytes'] as List<int>?;
-
-    return FileData(msg: msg, name: name, bytes: bytes);
+    final name = data['file_name'] as String?;
+    final bytes = data['file_byte'] as List<int>?;
+    final id = data['file_id'] as int?;
+    return FileData(msg: msg, name: name, bytes: bytes, id: id);
   }
 }
 

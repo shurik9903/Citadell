@@ -1,22 +1,38 @@
+import 'dart:convert';
+
+import 'package:flutter_univ/data/UserData.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 
-const API_URL = "ws://localhost:8080/FSB/subs";
+const API_URL = "ws://localhost:8080/FSB/WSConnect";
 
 class WebSocketService {
   WebSocketChannel? connection;
 
   close() async {
-    connection?.sink.close();
+    connection?.sink.close(1000, 'Exit');
   }
 
   open() async {
     try {
       connection = WebSocketChannel.connect(Uri.parse("$API_URL"));
+      return true;
     } catch (e) {
-      print(e);
-      return 'WebSocket connection failed';
+      print('WebSocket connection failed: ' + e.toString());
+      return false;
     }
+  }
+
+  sendMessage() {
+    var userData = UserDataSingleton();
+
+    var JSONMessage = jsonEncode(<String, String>{
+      'login': userData.login,
+      'token': userData.token,
+      'message': 'test'
+    });
+
+    connection?.sink.add(JSONMessage);
   }
 }
 

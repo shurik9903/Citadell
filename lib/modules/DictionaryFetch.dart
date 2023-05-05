@@ -2,7 +2,7 @@ import '../data/UserData.dart';
 import 'package:http/http.dart' as http;
 
 Future<dynamic> dictionaryFetch(String word) async {
-  var userData = UserData_Singleton();
+  var userData = UserDataSingleton();
 
   var response = await http.get(
       Uri.parse('http://localhost:8080/FSB/api/dictionary/$word'),
@@ -17,8 +17,12 @@ Future<dynamic> dictionaryFetch(String word) async {
     var data = response.body;
 
     return '';
-  } else {
-    print(response.statusCode);
-    throw Exception(response.statusCode);
   }
+  if (response.statusCode == 401) {
+    userData.exit();
+    return;
+  }
+
+  print(response.statusCode);
+  throw Exception(response.statusCode);
 }

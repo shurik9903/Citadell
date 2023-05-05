@@ -3,9 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/data/UserData.dart';
 import 'package:flutter_univ/modules/FileFetch.dart';
+import 'package:flutter_univ/pages/WorkPage.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
+import 'package:flutter_univ/widgets/DialogWindow.dart';
 import 'package:provider/provider.dart';
 
+import 'data/FileData.dart';
 import 'pages/RoutePage.dart';
 import 'theme/ThemeFactory.dart';
 
@@ -18,6 +21,17 @@ class ConnectStatus extends ChangeNotifier {
   }
 
   bool get status => _status;
+}
+
+class TokenStatus extends ChangeNotifier {
+  bool _tokenStatus = false;
+
+  set tokenStatus(bool tokenStatus) {
+    _tokenStatus = tokenStatus;
+    notifyListeners();
+  }
+
+  bool get tokenStatus => _tokenStatus;
 }
 
 class SelectTheme extends ChangeNotifier {
@@ -43,7 +57,7 @@ class SelectTheme extends ChangeNotifier {
 }
 
 void main() {
-  UserData_Singleton();
+  UserDataSingleton();
   runApp(const MyApp());
 }
 
@@ -59,7 +73,18 @@ class _MyAppState extends State<MyApp> {
   //Provider для возможности глобально изменить цвет
   final SelectTheme _selectTheme = SelectTheme();
   final ConnectStatus _connectStatus = ConnectStatus();
+  final OpenFiles _openFile = OpenFiles();
+  final TokenStatus _tokenStatus = TokenStatus();
   EnumPage _enumPage = EnumPage.none;
+
+  @override
+  void initState() {
+    super.initState();
+
+    UserDataSingleton().exitCallback = () {
+      _tokenStatus.tokenStatus = false;
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,16 +102,26 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(
           create: (context) => _connectStatus,
         ),
+        ChangeNotifierProvider(
+          create: (context) => _openFile,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => _tokenStatus,
+        ),
       ],
       builder: (context, child) {
+        if (context.watch<TokenStatus>().tokenStatus == true) {
+          Navigator.pushNamed(context, '/login');
+        }
+
         return MaterialApp(
           initialRoute: '/login',
           title: 'FSB',
           theme: themeFactory.themeCreator(context.watch<SelectTheme>().theme),
           onGenerateRoute: (settings) {
-            var user_data = UserData_Singleton();
+            var userData = UserDataSingleton();
 
-            if (user_data.token.isEmpty) {
+            if (userData.token.isEmpty) {
               _enumPage = EnumPage.login;
             } else {
               var path = settings.name?.split('/');
@@ -173,7 +208,32 @@ class _DrawerMenuState extends State<DrawerMenu> {
         ),
         ListTile(
           title: Text("Загрузить данные"),
-          onTap: () {},
+          onTap: () async {
+            await getAllUserFileFetch().then((value) async {
+              await showCustomDialogWindow(
+                context,
+                SizedBox(
+                  width: 500,
+                  child: Column(
+                    children: [
+                      ...(value as List<FileData>).map<Widget>((value) {
+                        return SelectFileContainer(
+                            name: value.name ?? ' ', fileID: value.id ?? -1);
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              ).then((value) async {
+                if (value as String == "cancel") {
+                  return;
+                }
+              }).catchError((error) {
+                return;
+              });
+            }).catchError((error) {
+              print(error);
+            });
+          },
         ),
         ListTile(
           title: Text("Доп. Информация"),
@@ -192,7 +252,6 @@ class _DrawerMenuState extends State<DrawerMenu> {
         ListTile(
           title: Text("Выход"),
           onTap: () {
-            UserData_Singleton().clear();
             Navigator.pushNamed(context, '/login');
           },
         ),
@@ -203,6 +262,54 @@ class _DrawerMenuState extends State<DrawerMenu> {
           },
         ),
       ],
+    );
+  }
+}
+
+class SelectFileContainer extends StatefulWidget {
+  const SelectFileContainer(
+      {super.key, required this.name, required this.fileID});
+
+  final String name;
+  final int fileID;
+
+  @override
+  State<SelectFileContainer> createState() => _SelectFileContainerState();
+}
+
+class _SelectFileContainerState extends State<SelectFileContainer> {
+  late String name;
+  late int fileID;
+
+  @override
+  void initState() {
+    super.initState();
+    name = widget.name;
+    fileID = widget.fileID;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        print('${name} ${fileID}');
+        context.read<OpenFiles>().addData(name, newFile: true);
+        Navigator.pop(context, "cancel");
+      },
+      child: Container(
+        margin: const EdgeInsets.all(5),
+        width: double.infinity,
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+            color: appTheme(context).secondaryColor,
+            border: Border.all(color: appTheme(context).accentColor),
+            borderRadius: const BorderRadius.all(Radius.circular(5))),
+        child: Row(
+          children: [
+            Text(name),
+          ],
+        ),
+      ),
     );
   }
 }
