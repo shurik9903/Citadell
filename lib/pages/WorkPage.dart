@@ -135,36 +135,17 @@ class OpenFiles extends ChangeNotifier {
         .then((docData) {
       print("File OK");
 
-      List<DataRow> dataRow = [];
       List<DataColumn> dataTitle = [];
+      List<DataRow> dataRow = [];
+      int maxRowLenght = -1;
 
       try {
         if (docData is DocData) {
-          docData.rows?.forEach((key, value) {
-            if (value is List<dynamic>) {
-              dataRow.add(buildTableRow(rowsText: [...value]));
-            } else {
-              throw Exception(
-                  "File Error 1: Файл поврежден и не может быть прочитан.");
-            }
-          });
-        } else {
-          throw Exception(
-              "File Error 2: Файл поврежден и не может быть прочитан.");
-        }
-
-        if (newFile) {
-          if (docData.title?.length !=
-              (docData.rows?.entries.first.value as List<dynamic>).length) {
-            throw Exception(
-                "File Error 3: Файл поврежден и не может быть прочитан.");
-          }
-
           docData.title?.addAll([
             "Анализированное сообщение",
             "Вероятность",
             "Обновить",
-            "Выделение"
+            "Выделение",
           ]);
 
           docData.title?.asMap().forEach((key, value) {
@@ -177,6 +158,31 @@ class OpenFiles extends ChangeNotifier {
             ));
           });
 
+          docData.rows?.forEach((key, value) {
+            if (value is List<dynamic>) {
+              if (maxRowLenght < value.length) {
+                maxRowLenght = value.length + 4;
+              }
+
+              if (value.isNotEmpty) {
+                dataRow.add(buildTableRow(rowsText: [...value]));
+              }
+            } else {
+              throw Exception(
+                  "File Error 1: Файл поврежден и не может быть прочитан.");
+            }
+          });
+        } else {
+          throw Exception(
+              "File Error 2: Файл поврежден и не может быть прочитан.");
+        }
+
+        if (dataTitle.length != maxRowLenght) {
+          throw Exception(
+              "File Error 3: Файл поврежден и не может быть прочитан. Количество строк превышает количество столбцов.");
+        }
+
+        if (newFile) {
           FileContainer fileContainer = FileContainer(
             key: () {
               var r = Random();
@@ -194,16 +200,16 @@ class OpenFiles extends ChangeNotifier {
               selectFile: fileContainer);
 
           addFile(selectFile);
-
-          fileTitle = dataTitle;
         }
 
+        fileTitle = dataTitle;
         fileRow = dataRow;
       } catch (e) {
         throw Exception("Error: ${e.toString()}");
       }
     }).catchError((error) {
       print(error.toString());
+      fileTitle = [];
       fileRow = [];
     });
   }
@@ -315,7 +321,7 @@ class _WorkPageState extends State<WorkPage> {
                     mainAxisSize: MainAxisSize.max,
                     children: const [
                       Expanded(
-                        flex: 100,
+                        flex: 75,
                         child: MFileView(),
                       ),
                       Spacer(

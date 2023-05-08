@@ -123,8 +123,6 @@ class _MTableViewState extends State<MTableView> {
                       Wrap(
                         spacing: 5,
                         direction: Axis.horizontal,
-                        // crossAxisAlignment: WrapCrossAlignment.start,
-                        // alignment: WrapAlignment.center,
                         children: [
                           TextButton(
                             onPressed: () {
@@ -245,8 +243,6 @@ DataRow buildTableRow(
     {required List<String> rowsText,
     List<TextSpan>? analyzedText,
     String probability = ""}) {
-  print(rowsText.length);
-
   return DataRow(cells: [
     ...rowsText.map((value) => DataCell(Container(
           alignment: Alignment.center,

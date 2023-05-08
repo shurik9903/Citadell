@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dropzone/flutter_dropzone.dart';
+
+import '../../theme/AppThemeDefault.dart';
 
 class ReplaceDialogWindows extends StatefulWidget {
-  ReplaceDialogWindows({super.key, this.fileName});
+  const ReplaceDialogWindows({super.key, this.fileName});
 
-  String? fileName;
+  final String? fileName;
 
   @override
   State<ReplaceDialogWindows> createState() => _ReplaceDialogWindowsState();
@@ -69,61 +72,6 @@ Future<void> showReplaceDialogWindow(
     context: context,
     builder: (context) {
       return ReplaceDialogWindows(fileName: fileName);
-    },
-  );
-}
-
-class CustomDialogWindow extends StatefulWidget {
-  CustomDialogWindow({super.key, required this.child});
-
-  Widget child;
-
-  @override
-  State<CustomDialogWindow> createState() => _CustomDialogWindowState();
-}
-
-class _CustomDialogWindowState extends State<CustomDialogWindow> {
-  late Widget child;
-
-  @override
-  void initState() {
-    super.initState();
-
-    child = widget.child;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            margin: const EdgeInsets.all(10),
-            child: child,
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context, "cancel");
-                },
-                child: const Text("Закрыть"),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-Future<void> showCustomDialogWindow(BuildContext context, Widget child) async {
-  return await showDialog(
-    context: context,
-    builder: (context) {
-      return CustomDialogWindow(child: child);
     },
   );
 }

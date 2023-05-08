@@ -19,7 +19,8 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         children: [
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 100, horizontal: 300),
+            width: 500,
+            margin: const EdgeInsets.symmetric(vertical: 100, horizontal: 100),
             child: Column(
               children: [
                 Wrap(
@@ -58,8 +59,6 @@ class _LoginPageState extends State<LoginPage> {
                             msg = error.toString();
                           });
                         });
-
-                        // Navigator.pushNamed(context, '/work');
                       },
                       child: const Text("Вход"),
                     )

@@ -5,7 +5,7 @@ import 'package:flutter_univ/data/UserData.dart';
 import 'package:flutter_univ/modules/FileFetch.dart';
 import 'package:flutter_univ/pages/WorkPage.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
-import 'package:flutter_univ/widgets/DialogWindow.dart';
+import 'package:flutter_univ/widgets/DialogWindowWidgets/CustomDialog.dart';
 import 'package:provider/provider.dart';
 
 import 'data/FileData.dart';
@@ -155,7 +155,7 @@ class _MyAppState extends State<MyApp> {
                                 padding: const EdgeInsets.all(5),
                                 color: appTheme(context).primaryColor,
                                 constraints: BoxConstraints.tightFor(
-                                    height: max(1080, constraints.maxHeight),
+                                    height: max(840, constraints.maxHeight),
                                     width: max(1920, constraints.maxWidth)),
                                 child: pageFactory.pageCreator(_enumPage)),
                           ),
@@ -203,27 +203,34 @@ class _DrawerMenuState extends State<DrawerMenu> {
               ),
             )),
         ListTile(
-          title: Text("Сохранить данные"),
+          title: const Text("Сохранить данные"),
           onTap: () async {},
         ),
         ListTile(
-          title: Text("Загрузить данные"),
+          title: const Text("Загрузить данные"),
           onTap: () async {
-            await getAllUserFileFetch().then((value) async {
-              await showCustomDialogWindow(
-                context,
-                SizedBox(
-                  width: 500,
-                  child: Column(
-                    children: [
-                      ...(value as List<FileData>).map<Widget>((value) {
-                        return SelectFileContainer(
-                            name: value.name ?? ' ', fileID: value.id ?? -1);
-                      }).toList(),
-                    ],
+            await getAllUserFileFetch().then((value) {
+              showCustomDialogWindow(
+                  context: context,
+                  child: SizedBox(
+                    width: 500,
+                    child: Column(
+                      children: [
+                        ...(value as List<FileData>).map<Widget>((value) {
+                          return SelectFileContainer(
+                              name: value.name ?? ' ', fileID: value.id ?? -1);
+                        }).toList(),
+                      ],
+                    ),
                   ),
-                ),
-              ).then((value) async {
+                  button: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context, "cancel");
+                      },
+                      child: const Text("Закрыть"),
+                    ),
+                  ]).then((value) async {
                 if (value as String == "cancel") {
                   return;
                 }

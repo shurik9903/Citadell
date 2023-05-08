@@ -1,11 +1,8 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../modules/FileFetch.dart';
 import '../../pages/WorkPage.dart';
 import '../../theme/AppThemeDefault.dart';
-import '../DialogWindow.dart';
+import '../DialogWindowWidgets/FileDialog.dart';
 
 class MFileView extends StatefulWidget {
   const MFileView({super.key});
@@ -28,7 +25,6 @@ class _MFileViewState extends State<MFileView> {
           ),
         ),
         width: double.infinity,
-        height: 200,
         child: FractionallySizedBox(
           widthFactor: 0.98,
           heightFactor: 0.85,
@@ -44,10 +40,9 @@ class _MFileViewState extends State<MFileView> {
                 ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    flex: 14,
+                    flex: 150,
                     child: Scrollbar(
                       controller: controller,
                       interactive: true,
@@ -65,83 +60,90 @@ class _MFileViewState extends State<MFileView> {
                       ),
                     ),
                   ),
-                  Expanded(
+                  const Spacer(
                     flex: 1,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.only(right: 10),
                     child: GestureDetector(
                       onTap: () async {
-                        FilePickerResult? result =
-                            await FilePicker.platform.pickFiles();
+                        await showFileDialogWindow(context).then((value) {
+                          if (value as String == "open") {}
 
-                        try {
-                          if (result != null) {
-                            PlatformFile file = result.files.first;
-
-                            print(file.name);
-                            // print(file.bytes);
-                            // print(file.size);
-                            // print(file.extension);
-                            // print(file.path);
-
-                            bool read = true;
-
-                            await saveFileFetch(
-                                    file.name, file.bytes.toString())
-                                .then((value) async {
-                              print(value);
-
-                              if (value == "true") {
-                                await showReplaceDialogWindow(
-                                        context, file.name)
-                                    .then((value) async {
-                                  if (value as String == null) {
-                                    return;
-                                  }
-
-                                  if (value as String == "rewrite") {
-                                    await rewriteFileFetch(file.name)
-                                        .then((value) {})
-                                        .catchError((error) {
-                                      read = false;
-                                      print(error);
-                                      return;
-                                    });
-                                  }
-
-                                  if (value == "cancel") {
-                                    read = false;
-                                    return;
-                                  }
-                                }).catchError((error) {
-                                  read = false;
-                                  print(error);
-                                  return;
-                                });
-                              }
-
-                              print("File Save OK");
-                            }).catchError((error) {
-                              read = false;
-                              print(error.toString());
-                              // setState(() {
-                              // msg = error.toString();
-                              // });
-                              return;
-                            });
-
-                            print(read);
-                            if (read) {
-                              await context.read<OpenFiles>().addData(
-                                    file.name,
-                                    newFile: true,
-                                  );
-                            }
-                          } else {
-                            throw Exception("Не удалось открыть файл");
+                          if (value == "cancel") {
+                            return;
                           }
-                        } catch (error) {
-                          print(error.toString());
-                          return;
-                        }
+                        });
+
+                        // FilePickerResult? result =
+                        //     await FilePicker.platform.pickFiles();
+
+                        // try {
+                        //   if (result != null) {
+                        //     PlatformFile file = result.files.first;
+
+                        //     print(file.name);
+
+                        //     bool read = true;
+
+                        //     await saveFileFetch(
+                        //             file.name, file.bytes.toString())
+                        //         .then((value) async {
+                        //       print(value);
+
+                        //       if (value == "true") {
+                        //         await showReplaceDialogWindow(
+                        //                 context, file.name)
+                        //             .then((value) async {
+                        //           if (value as String == null) {
+                        //             return;
+                        //           }
+
+                        //           if (value as String == "rewrite") {
+                        //             await rewriteFileFetch(file.name)
+                        //                 .then((value) {})
+                        //                 .catchError((error) {
+                        //               read = false;
+                        //               print(error);
+                        //               return;
+                        //             });
+                        //           }
+
+                        //           if (value == "cancel") {
+                        //             read = false;
+                        //             return;
+                        //           }
+                        //         }).catchError((error) {
+                        //           read = false;
+                        //           print(error);
+                        //           return;
+                        //         });
+                        //       }
+
+                        //       print("File Save OK");
+                        //     }).catchError((error) {
+                        //       read = false;
+                        //       print(error.toString());
+                        //       // setState(() {
+                        //       // msg = error.toString();
+                        //       // });
+                        //       return;
+                        //     });
+
+                        //     print(read);
+                        //     if (read) {
+                        //       await context.read<OpenFiles>().addData(
+                        //             file.name,
+                        //             newFile: true,
+                        //           );
+                        //     }
+                        //   } else {
+                        //     throw Exception("Не удалось открыть файл");
+                        //   }
+                        // } catch (error) {
+                        //   print(error.toString());
+                        //   return;
+                        // }
                       },
                       child: const SizedBox(
                           height: double.infinity,

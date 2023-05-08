@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
 
 import '../../pages/WorkPage.dart';
@@ -17,14 +18,32 @@ class _FileContainerState extends State<FileContainer> {
   late String name;
   late Key? selectKey;
   late Function callback;
+  late Widget _textScrolls;
+
+  void textMove() {
+    setState(() {
+      _textScrolls = Marquee(
+        text: name,
+        blankSpace: 30,
+      );
+    });
+  }
+
+  void textStop() {
+    setState(() {
+      _textScrolls = Text(
+        name,
+        overflow: TextOverflow.fade,
+        maxLines: 1,
+      );
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-
-    setState(() {
-      name = widget.name;
-    });
+    name = widget.name;
+    textStop();
   }
 
   @override
@@ -32,14 +51,22 @@ class _FileContainerState extends State<FileContainer> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        GestureDetector(
-          onTap: () {
-            context.read<OpenFiles>().selectFile(widget.key);
+        MouseRegion(
+          onEnter: (event) {
+            textMove();
           },
-          child: Container(
-              padding: const EdgeInsets.all(20),
+          onExit: (event) {
+            textStop();
+          },
+          child: GestureDetector(
+            onTap: () {
+              context.read<OpenFiles>().selectFile(widget.key);
+            },
+            child: Container(
+              padding: const EdgeInsets.only(left: 2.5, right: 20),
               margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
               alignment: Alignment.center,
+              constraints: const BoxConstraints(maxWidth: 250),
               decoration: BoxDecoration(
                   color:
                       context.watch<OpenFiles>().selectedFile?.selectFile.key ==
@@ -48,7 +75,9 @@ class _FileContainerState extends State<FileContainer> {
                           : appTheme(context).secondaryColor,
                   border: Border.all(color: appTheme(context).accentColor),
                   borderRadius: const BorderRadius.all(Radius.circular(5))),
-              child: Text(name)),
+              child: _textScrolls,
+            ),
+          ),
         ),
         Positioned(
           top: 5,
@@ -60,7 +89,7 @@ class _FileContainerState extends State<FileContainer> {
             },
             child: Container(
               decoration: BoxDecoration(
-                color: appTheme(context).tertiaryColor,
+                color: Color.fromARGB(220, 155, 0, 0),
                 shape: BoxShape.circle,
                 border: Border.all(color: appTheme(context).accentColor),
               ),
