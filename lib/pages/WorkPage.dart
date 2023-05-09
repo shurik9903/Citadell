@@ -140,6 +140,8 @@ class OpenFiles extends ChangeNotifier {
       int maxRowLenght = -1;
 
       try {
+        print(docData);
+
         if (docData is DocData) {
           docData.title?.addAll([
             "Анализированное сообщение",

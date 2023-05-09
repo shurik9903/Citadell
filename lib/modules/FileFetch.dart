@@ -6,12 +6,13 @@ import 'package:flutter_univ/data/AnalysisTextData.dart';
 import 'package:flutter_univ/data/FileData.dart';
 import 'package:flutter_univ/data/RowTableData.dart';
 import 'package:flutter_univ/modules/AnalysisFetch.dart';
+import 'package:flutter_univ/widgets/DialogWindowWidgets/FileDialog.dart';
 import 'package:http/http.dart' as http;
 
 import '../data/Option.dart';
 import '../data/UserData.dart';
 
-Future<dynamic> saveFileFetch(String docName, String docBytes) async {
+Future<dynamic> saveFileFetch(LoadFile fileData) async {
   var userData = UserDataSingleton();
   var response = await http.post(
     Uri.parse('http://localhost:8080/FSB/api/doc'),
@@ -21,10 +22,7 @@ Future<dynamic> saveFileFetch(String docName, String docBytes) async {
       "token": userData.token,
       "login": userData.login,
     },
-    body: jsonEncode(<String, String>{
-      'doc_name': docName,
-      'doc_bytes': docBytes,
-    }),
+    body: jsonEncode(fileData),
   );
 
   if (response.statusCode == 200) {
