@@ -4,13 +4,6 @@ import 'package:localstorage/localstorage.dart';
 
 abstract class UserDataBase {
   final storage = LocalStorage('userData.json');
-  Function? _exitCallback;
-
-  Function? get exitCallback => _exitCallback;
-
-  set exitCallback(Function? exitCallback) {
-    _exitCallback = exitCallback;
-  }
 
   set login(String login) => storage.setItem('login', login);
 
@@ -23,13 +16,6 @@ abstract class UserDataBase {
   void clear() {
     storage.deleteItem('login');
     storage.deleteItem('token');
-  }
-
-  void exit() {
-    clear();
-    if (exitCallback != null) {
-      exitCallback!();
-    }
   }
 }
 

@@ -22,8 +22,7 @@ Future<dynamic> rabbitFetch() async {
     return '';
   }
   if (response.statusCode == 401) {
-    UserDataSingleton().exit();
-    return;
+    throw Exception(response.statusCode);
   }
 
   print(response.statusCode);

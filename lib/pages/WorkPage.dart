@@ -218,6 +218,7 @@ class OpenFiles extends ChangeNotifier {
 
   Future<void> refreshData() async {
     if (selectedFile == null) {
+      fileTitle = [];
       fileRow = [];
       return;
     }

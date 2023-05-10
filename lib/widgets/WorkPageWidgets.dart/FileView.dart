@@ -79,6 +79,8 @@ class _MFileViewState extends State<MFileView> {
                                   await showReplaceDialogWindow(
                                           context, value.name)
                                       .then((select) async {
+                                    print(select as String);
+
                                     if (select as String == null) {
                                       return;
                                     }

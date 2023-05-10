@@ -23,8 +23,7 @@ Future<dynamic> fileAnalysisFetch(String docid) async {
     return '';
   }
   if (response.statusCode == 401) {
-    userData.exit();
-    return;
+    throw Exception(response.statusCode);
   }
 
   print(response.statusCode);

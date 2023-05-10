@@ -20,8 +20,7 @@ Future<dynamic> dictionaryFetch(String word) async {
     return '';
   }
   if (response.statusCode == 401) {
-    userData.exit();
-    return;
+    throw Exception(response.statusCode);
   }
 
   print(response.statusCode);

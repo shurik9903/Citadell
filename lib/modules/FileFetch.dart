@@ -38,8 +38,7 @@ Future<dynamic> saveFileFetch(LoadFile fileData) async {
     return replace;
   }
   if (response.statusCode == 401) {
-    userData.exit();
-    return;
+    throw Exception(response.statusCode);
   }
 
   print(response.statusCode);
@@ -75,8 +74,7 @@ Future<dynamic> getAllUserFileFetch() async {
     return files;
   }
   if (response.statusCode == 401) {
-    userData.exit();
-    return;
+    throw Exception(response.statusCode);
   }
 
   print(response.statusCode);
@@ -111,8 +109,7 @@ Future<dynamic> getDocFetch(String name, {int start = 1, diapason = 25}) async {
   }
 
   if (response.statusCode == 401) {
-    userData.exit();
-    return;
+    throw Exception(response.statusCode);
   }
 
   print(response.statusCode);
@@ -143,8 +140,7 @@ Future<dynamic> rewriteFileFetch(String docName) async {
     return "";
   }
   if (response.statusCode == 401) {
-    userData.exit();
-    return;
+    throw Exception(response.statusCode);
   }
 
   print(response.statusCode);

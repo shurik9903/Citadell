@@ -459,8 +459,8 @@ class _ColRowControllerState extends State<ColRowController> {
   Widget sizeWindowView() {
     return !isAutoSizeTable
         ? Table(columnWidths: const {
-            0: FlexColumnWidth(3),
-            1: FlexColumnWidth(6),
+            0: FlexColumnWidth(5),
+            1: FlexColumnWidth(8),
           }, children: [
             TableRow(
               children: [
@@ -518,7 +518,7 @@ class _ColRowControllerState extends State<ColRowController> {
                   verticalAlignment: TableCellVerticalAlignment.middle,
                   child: Padding(
                     padding: EdgeInsets.all(10),
-                    child: Text("Длина строки: "),
+                    child: Text("Количество строк: "),
                   ),
                 ),
                 TableCell(
@@ -543,7 +543,7 @@ class _ColRowControllerState extends State<ColRowController> {
                   verticalAlignment: TableCellVerticalAlignment.middle,
                   child: Padding(
                     padding: EdgeInsets.all(10),
-                    child: Text("Длина столбца: "),
+                    child: Text("Количество столбцов: "),
                   ),
                 ),
                 TableCell(

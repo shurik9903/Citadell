@@ -80,10 +80,6 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-
-    UserDataSingleton().exitCallback = () {
-      _tokenStatus.tokenStatus = false;
-    };
   }
 
   @override
