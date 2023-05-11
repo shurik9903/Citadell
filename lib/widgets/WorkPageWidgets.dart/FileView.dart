@@ -71,64 +71,7 @@ class _MFileViewState extends State<MFileView> {
                       onTap: () async {
                         await showFileDialogWindow(context).then((value) async {
                           try {
-                            if (value is LoadFile) {
-                              bool read = true;
-
-                              await saveFileFetch(value).then((result) async {
-                                if (result == "true") {
-                                  await showReplaceDialogWindow(
-                                          context, value.name)
-                                      .then((select) async {
-                                    print(select as String);
-
-                                    if (select as String == null) {
-                                      return;
-                                    }
-
-                                    if (select as String == "rewrite") {
-                                      await rewriteFileFetch(value.fullName)
-                                          .then((value) {})
-                                          .catchError((error) {
-                                        read = false;
-
-                                        print(error);
-                                        return;
-                                      });
-                                    }
-
-                                    if (select == "cancel") {
-                                      read = false;
-                                      return;
-                                    }
-                                  }).catchError((error) {
-                                    read = false;
-                                    print(error);
-                                    return;
-                                  });
-                                }
-
-                                print("File Save OK");
-                              }).catchError((error) {
-                                read = false;
-                                print(error.toString());
-
-                                return;
-                              });
-
-                              if (read) {
-                                await context.read<OpenFiles>().addData(
-                                      value.fullName,
-                                      newFile: true,
-                                    );
-                              }
-                              return;
-                            }
-
-                            if (value == "cancel") {
-                              return;
-                            }
-
-                            throw Exception("Не удалось открыть файл");
+                            await saveFile(value);
                           } catch (e) {
                             print(e.toString());
                             return;
@@ -145,5 +88,70 @@ class _MFileViewState extends State<MFileView> {
                 ],
               )),
         ));
+  }
+
+  Future<void> saveFile(dynamic value) async {
+    if (value is LoadFile) {
+      bool read = true;
+
+      await saveFileFetch(value).then((result) async {
+        if (result == "true") {
+          await showReplaceDialogWindow(context, value.name)
+              .then((select) async {
+            read = await replaceFile(select, value.fullName);
+          }).catchError((error) {
+            read = false;
+            print(error);
+            return;
+          });
+        }
+
+        print("File Save OK");
+      }).catchError((error) {
+        read = false;
+        print(error.toString());
+
+        return;
+      });
+
+      if (read) {
+        addData(value.fullName);
+      }
+      return;
+    }
+
+    if (value == "cancel") {
+      return;
+    }
+
+    throw Exception("Не удалось открыть файл");
+  }
+
+  Future<bool> replaceFile(String select, String fullName) async {
+    if (select.isEmpty) {
+      return true;
+    }
+
+    if (select == "rewrite") {
+      return await rewriteFileFetch(fullName).then((value) {
+        return true;
+      }).catchError((error) {
+        print(error);
+        return false;
+      });
+    }
+
+    if (select == "cancel") {
+      return false;
+    }
+
+    return false;
+  }
+
+  void addData(String fullName) {
+    context.read<OpenFiles>().addData(
+          fullName,
+          newFile: true,
+        );
   }
 }

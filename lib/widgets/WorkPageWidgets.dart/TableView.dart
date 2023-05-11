@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/modules/FileFetch.dart';
+import 'package:flutter_univ/widgets/DialogWindowWidgets/FileDialog.dart';
 import 'package:provider/provider.dart';
 
 import '../../pages/WorkPage.dart';
@@ -77,7 +81,7 @@ class _MTableViewState extends State<MTableView> {
             ),
           ),
           Expanded(
-              flex: 1,
+              flex: 2,
               child: Container(
                 margin: const EdgeInsets.only(
                     left: 20, bottom: 10, top: 10, right: 20),
@@ -134,10 +138,10 @@ class _MTableViewState extends State<MTableView> {
 
                               if (start == 1) return;
 
-                              int start_difference =
+                              int startDifference =
                                   start - context.read<OpenFiles>().numberRow;
 
-                              if (start_difference < 1) {
+                              if (startDifference < 1) {
                                 context.read<OpenFiles>().selectedFile?.start =
                                     1;
                                 context.read<OpenFiles>().refreshData();
@@ -145,16 +149,16 @@ class _MTableViewState extends State<MTableView> {
                               }
 
                               context.read<OpenFiles>().selectedFile?.start =
-                                  start_difference;
+                                  startDifference;
                               context.read<OpenFiles>().refreshData();
                             },
                             child: const Text("<"),
                           ),
-                          Container(
+                          SizedBox(
                             width: 25,
                             child: TextField(
                               onSubmitted: (value) {
-                                int actual_page = ((context
+                                int actualPage = ((context
                                                 .read<OpenFiles>()
                                                 .selectedFile
                                                 ?.start ??
@@ -165,7 +169,7 @@ class _MTableViewState extends State<MTableView> {
                                 if (int.tryParse(value) != null) {
                                   int setPage = int.parse(value);
                                   if (0 > setPage || setPage > _lastPage) {
-                                    page.text = actual_page.toString();
+                                    page.text = actualPage.toString();
                                     return;
                                   }
 
@@ -180,7 +184,7 @@ class _MTableViewState extends State<MTableView> {
                                   return;
                                 }
 
-                                page.text = actual_page.toString();
+                                page.text = actualPage.toString();
                               },
                               controller: page,
                               textAlign: TextAlign.right,
@@ -194,34 +198,24 @@ class _MTableViewState extends State<MTableView> {
                           ),
                           Text("/ $_lastPage"),
                           TextButton(
-                            onPressed: () {
-                              int start = context
+                            onPressed: () async {
+                              print(context.read<OpenFiles>().changeData);
+
+                              if (context
+                                  .read<OpenFiles>()
+                                  .changeData
+                                  .isNotEmpty) {
+                                await updateDocFetch(jsonEncode({
+                                  'docName': context
                                       .read<OpenFiles>()
                                       .selectedFile
-                                      ?.start ??
-                                  1;
-
-                              if (start ==
-                                  context
-                                      .read<OpenFiles>()
-                                      .selectedFile
-                                      ?.numberRows) return;
-
-                              int start_difference =
-                                  start + context.read<OpenFiles>().numberRow;
-
-                              if (start_difference >
-                                  (context
-                                          .read<OpenFiles>()
-                                          .selectedFile
-                                          ?.numberRows ??
-                                      0)) {
-                                return;
+                                      ?.name,
+                                  'docData': jsonEncode(
+                                      context.read<OpenFiles>().changeData)
+                                }));
                               }
 
-                              context.read<OpenFiles>().selectedFile?.start =
-                                  start_difference;
-                              context.read<OpenFiles>().refreshData();
+                              refreshDataRight();
                             },
                             child: const Text(">"),
                           ),
@@ -237,20 +231,42 @@ class _MTableViewState extends State<MTableView> {
       ),
     );
   }
+
+  void refreshDataRight() {
+    int start = context.read<OpenFiles>().selectedFile?.start ?? 1;
+
+    if (start == context.read<OpenFiles>().selectedFile?.numberRows) return;
+
+    int startDifference = start + context.read<OpenFiles>().numberRow;
+
+    if (startDifference >
+        (context.read<OpenFiles>().selectedFile?.numberRows ?? 0)) {
+      return;
+    }
+
+    context.read<OpenFiles>().selectedFile?.start = startDifference;
+    context.read<OpenFiles>().refreshData();
+  }
 }
 
 DataRow buildTableRow(
     {required List<String> rowsText,
-    List<TextSpan>? analyzedText,
-    String probability = ""}) {
+    required String rowIndex,
+    // required List<TextSpan>? analyzedText,
+    required String analyzedText,
+    required String probability,
+    required bool update,
+    required bool incorrect}) {
   return DataRow(cells: [
     ...rowsText.map((value) => DataCell(Container(
           alignment: Alignment.center,
           child: Text(value),
         ))),
     DataCell(
-      MAnalysisText(parseText: analyzedText),
-    ),
+        // MAnalysisText(parseText: analyzedText),
+        MAnalysisText(
+      parseText: [],
+    )),
     DataCell(Container(
       alignment: Alignment.center,
       child: Text(
@@ -267,11 +283,11 @@ DataRow buildTableRow(
         ),
       ),
     )),
-    const DataCell(
-      MUpdateBox(),
+    DataCell(
+      MUpdateBox(value: update, index: rowIndex),
     ),
-    const DataCell(
-      MCheckBox(),
+    DataCell(
+      MCheckBox(value: incorrect, index: rowIndex),
     ),
   ]);
 }

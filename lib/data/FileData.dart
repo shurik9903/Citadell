@@ -30,15 +30,11 @@ class DocData {
     final msg = data['Msg'] as String?;
     final docData = jsonDecode(data['Data']) as Map<String, dynamic>?;
 
-    final rowNumber = docData?["RowNumber"] as String?;
-    final rows = jsonDecode(docData?["Rows"]) as Map<String, dynamic>?;
-    final title =
-        (jsonDecode(docData?["Title"]) as List<dynamic>?)?.cast<String>();
+    final rowNumber = docData?["rowNumber"] as int?;
+    final rows = docData?["rows"] as Map<String, dynamic>?;
+    final title = (docData?["title"] as List<dynamic>?)?.cast<String>();
 
     return DocData(
-        msg: msg,
-        rowNumber: int.parse(rowNumber ?? "0"),
-        rows: rows,
-        title: title);
+        msg: msg, rowNumber: rowNumber ?? 0, rows: rows, title: title);
   }
 }

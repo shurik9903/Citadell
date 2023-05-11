@@ -1,21 +1,14 @@
 import 'dart:convert';
-import 'dart:html';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_univ/data/AnalysisTextData.dart';
 import 'package:flutter_univ/data/FileData.dart';
-import 'package:flutter_univ/data/RowTableData.dart';
-import 'package:flutter_univ/modules/AnalysisFetch.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/FileDialog.dart';
 import 'package:http/http.dart' as http;
-
 import '../data/Option.dart';
 import '../data/UserData.dart';
 
 Future<dynamic> saveFileFetch(LoadFile fileData) async {
   var userData = UserDataSingleton();
   var response = await http.post(
-    Uri.parse('http://localhost:8080/FSB/api/doc'),
+    Uri.parse('http://localhost:8080/FSB/api/file'),
     headers: {
       "Content-type": "application/json",
       "Accept": "application/json",
@@ -104,7 +97,6 @@ Future<dynamic> getDocFetch(String name, {int start = 1, diapason = 25}) async {
     }
 
     final docData = DocData.fromJson(jsonDecode(data));
-
     return docData;
   }
 
@@ -121,12 +113,46 @@ Future<dynamic> rewriteFileFetch(String docName) async {
   var option = OptionSingleton();
 
   var response =
-      await http.put(Uri.parse('${option.url}doc?name=$docName'), headers: {
+      await http.put(Uri.parse('${option.url}file?name=$docName'), headers: {
     "Content-type": "application/json",
     "Accept": "application/json",
     "token": userData.token,
     "login": userData.login,
   });
+
+  if (response.statusCode == 200) {
+    var data = response.body;
+    var msg = jsonDecode(data)["Msg"];
+
+    if (msg != '') {
+      print(msg);
+      throw Exception(msg);
+    }
+
+    return "";
+  }
+  if (response.statusCode == 401) {
+    throw Exception(response.statusCode);
+  }
+
+  print(response.statusCode);
+  throw Exception(response.statusCode);
+}
+
+Future<dynamic> updateDocFetch(String docData) async {
+  var userData = UserDataSingleton();
+  var option = OptionSingleton();
+
+  print(docData);
+
+  var response = await http.put(Uri.parse('${option.url}doc'),
+      headers: {
+        "Content-type": "application/json",
+        "Accept": "application/json",
+        "token": userData.token,
+        "login": userData.login,
+      },
+      body: jsonEncode(docData));
 
   if (response.statusCode == 200) {
     var data = response.body;

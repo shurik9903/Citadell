@@ -63,6 +63,7 @@ class OpenFiles extends ChangeNotifier {
   SelectFile? _selectFile;
   List<DataColumn> _fileTitle = [];
   List<DataRow> _fileRow = [];
+  Map<String, Map<String, String>> changeData = {};
   int _numberRow = 25;
 
   set fileTitle(List<DataColumn> fileTitle) {
@@ -140,16 +141,7 @@ class OpenFiles extends ChangeNotifier {
       int maxRowLenght = -1;
 
       try {
-        print(docData);
-
         if (docData is DocData) {
-          docData.title?.addAll([
-            "Анализированное сообщение",
-            "Вероятность",
-            "Обновить",
-            "Выделение",
-          ]);
-
           docData.title?.asMap().forEach((key, value) {
             dataTitle.add(DataColumn(
               label: TableColumn(
@@ -163,11 +155,18 @@ class OpenFiles extends ChangeNotifier {
           docData.rows?.forEach((key, value) {
             if (value is List<dynamic>) {
               if (maxRowLenght < value.length) {
-                maxRowLenght = value.length + 4;
+                maxRowLenght = value.length;
               }
 
               if (value.isNotEmpty) {
-                dataRow.add(buildTableRow(rowsText: [...value]));
+                dataRow.add(buildTableRow(
+                  rowIndex: (int.tryParse(key)! - 1).toString(),
+                  rowsText: [...value.getRange(0, maxRowLenght - 4)],
+                  analyzedText: value[maxRowLenght - 4],
+                  probability: value[maxRowLenght - 3],
+                  update: value[maxRowLenght - 2] == "true",
+                  incorrect: value[maxRowLenght - 1] == "true",
+                ));
               }
             } else {
               throw Exception(
