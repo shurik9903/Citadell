@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/data/FileData.dart';
@@ -17,17 +18,17 @@ class SelectFile {
   late String _name = "";
   late int _start = 1;
   late int _numberRows = 1;
-  late FileContainer _selectFile;
+  late FileContainer _fileContainer;
 
   SelectFile(
       {required String name,
       required int start,
       required int numberRows,
-      required FileContainer selectFile}) {
+      required FileContainer fileContainer}) {
     _numberRows = numberRows;
     _name = name;
     _start = start;
-    _selectFile = selectFile;
+    _fileContainer = fileContainer;
   }
 
   set name(String name) {
@@ -51,11 +52,11 @@ class SelectFile {
 
   int get start => _start;
 
-  set selectFile(FileContainer fileContainer) {
-    _selectFile = fileContainer;
+  set fileContainer(FileContainer fileContainer) {
+    _fileContainer = fileContainer;
   }
 
-  FileContainer get selectFile => _selectFile;
+  FileContainer get fileContainer => _fileContainer;
 }
 
 class OpenFiles extends ChangeNotifier {
@@ -63,8 +64,16 @@ class OpenFiles extends ChangeNotifier {
   SelectFile? _selectFile;
   List<DataColumn> _fileTitle = [];
   List<DataRow> _fileRow = [];
-  Map<String, Map<String, String>> changeData = {};
+  Map<String, String> _analyzedText = {};
+
   int _numberRow = 25;
+
+  set analyzedText(Map<String, String> analyzedText) {
+    _analyzedText = analyzedText;
+    notifyListeners();
+  }
+
+  Map<String, String> get analyzedText => _analyzedText;
 
   set fileTitle(List<DataColumn> fileTitle) {
     _fileTitle = fileTitle;
@@ -108,10 +117,16 @@ class OpenFiles extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> saveReportData(String changeData) async {
+    if (selectedFile != null && selectedFile!.name.isNotEmpty) {
+      await updateDocFetch(selectedFile!.name, changeData);
+    }
+  }
+
   Future<void> removeFile(Key? keyFile) async {
     if (keyFile != null) {
       List<SelectFile> copeFile = _openFile
-          .where((element) => element.selectFile.key != keyFile)
+          .where((element) => element.fileContainer.key != keyFile)
           .toList();
 
       if (copeFile.isEmpty) {
@@ -123,7 +138,7 @@ class OpenFiles extends ChangeNotifier {
       await refreshData();
 
       _openFile.removeWhere(
-        (element) => element.selectFile.key == keyFile,
+        (element) => element.fileContainer.key == keyFile,
       );
 
       notifyListeners();
@@ -159,6 +174,8 @@ class OpenFiles extends ChangeNotifier {
               }
 
               if (value.isNotEmpty) {
+                analyzedText[key] = value[maxRowLenght - 4];
+
                 dataRow.add(buildTableRow(
                   rowIndex: (int.tryParse(key)! - 1).toString(),
                   rowsText: [...value.getRange(0, maxRowLenght - 4)],
@@ -198,7 +215,7 @@ class OpenFiles extends ChangeNotifier {
               name: name,
               start: 1,
               numberRows: docData.rowNumber ?? 0,
-              selectFile: fileContainer);
+              fileContainer: fileContainer);
 
           addFile(selectFile);
         }
@@ -228,7 +245,7 @@ class OpenFiles extends ChangeNotifier {
   Future<void> selectFile(Key? keyFile) async {
     if (keyFile != null) {
       List<SelectFile> selectFiles = _openFile
-          .where((element) => element.selectFile.key == keyFile)
+          .where((element) => element.fileContainer.key == keyFile)
           .toList();
 
       if (selectFiles.isEmpty) return;

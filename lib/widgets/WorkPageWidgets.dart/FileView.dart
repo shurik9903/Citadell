@@ -57,7 +57,7 @@ class _MFileViewState extends State<MFileView> {
                           ...context
                               .watch<OpenFiles>()
                               .openFile
-                              .map((e) => e.selectFile),
+                              .map((e) => e.fileContainer),
                         ],
                       ),
                     ),
@@ -129,7 +129,7 @@ class _MFileViewState extends State<MFileView> {
 
   Future<bool> replaceFile(String select, String fullName) async {
     if (select.isEmpty) {
-      return true;
+      return false;
     }
 
     if (select == "rewrite") {
@@ -143,6 +143,15 @@ class _MFileViewState extends State<MFileView> {
 
     if (select == "cancel") {
       return false;
+    }
+
+    if (select == "open") {
+      return await getFileFetch(fullName).then((value) {
+        return true;
+      }).catchError((error) {
+        print(error);
+        return false;
+      });
     }
 
     return false;

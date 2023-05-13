@@ -21,17 +21,27 @@ class _MMenuButtonState extends State<MMenuButton> {
       child: Container(
         margin: const EdgeInsets.all(5),
         decoration: BoxDecoration(
-            color: appTheme(context).tertiaryColor, shape: BoxShape.circle),
+            color: context.watch<ConnectStatus>().status
+                ? const Color.fromARGB(133, 9, 255, 0)
+                : const Color.fromARGB(162, 255, 30, 0),
+            shape: BoxShape.circle),
         child: Container(
           padding: const EdgeInsets.all(10),
           width: double.infinity,
           height: double.infinity,
-          margin: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-              color: context.watch<ConnectStatus>().status
-                  ? Color.fromARGB(133, 3, 101, 0)
-                  : Color.fromARGB(99, 129, 15, 0),
-              shape: BoxShape.circle),
+          margin: const EdgeInsets.all(7.5),
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white,
+                Colors.blue,
+                Colors.red,
+              ],
+            ),
+          ),
           child: FittedBox(
             child: Image.asset("lib/images/Coat_Russia.png"),
           ),

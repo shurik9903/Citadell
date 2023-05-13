@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +18,7 @@ class MUpdateBox extends StatefulWidget {
 class _MUpdateBoxState extends State<MUpdateBox> {
   late bool select;
   late String index;
+
   @override
   void initState() {
     super.initState();
@@ -35,10 +38,11 @@ class _MUpdateBoxState extends State<MUpdateBox> {
             select = value!;
           });
 
-          context.read<OpenFiles>().changeData[index] ??= {};
-
-          context.read<OpenFiles>().changeData[index]?["update"] =
-              select.toString();
+          context.read<OpenFiles>().saveReportData(jsonEncode({
+                'type': 'update',
+                'index': index,
+                'select': select.toString(),
+              }));
         },
       ),
     );

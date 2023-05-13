@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -200,7 +201,10 @@ class _DrawerMenuState extends State<DrawerMenu> {
             )),
         ListTile(
           title: const Text("Сохранить данные"),
-          onTap: () async {},
+          onTap: () async {
+            SelectFile? selectFile = context.read<OpenFiles>().selectedFile;
+            if (selectFile != null) await rewriteFileFetch(selectFile.name);
+          },
         ),
         ListTile(
           title: const Text("Загрузить данные"),
@@ -239,21 +243,24 @@ class _DrawerMenuState extends State<DrawerMenu> {
           },
         ),
         ListTile(
-          title: Text("Доп. Информация"),
+          title: const Text("Доп. Информация"),
           onTap: () {},
         ),
         ListTile(
-          title: Text("Настройки"),
+          title: const Text("Настройки"),
           onTap: () {
             Navigator.pushNamed(context, '/option');
           },
         ),
         ListTile(
-          title: Text("Закрыть файл"),
-          onTap: () {},
+          title: const Text("Закрыть файл"),
+          onTap: () {
+            context.read<OpenFiles>().removeFile(
+                context.read<OpenFiles>().selectedFile?.fileContainer.key);
+          },
         ),
         ListTile(
-          title: Text("Выход"),
+          title: const Text("Выход"),
           onTap: () {
             Navigator.pushNamed(context, '/login');
           },

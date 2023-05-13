@@ -51,6 +51,7 @@ Future<void> showCustomDialogWindow(
     required Widget child,
     required List<Widget> button}) async {
   return await showDialog(
+    barrierDismissible: false,
     context: context,
     builder: (context) {
       return CustomDialogWindow(

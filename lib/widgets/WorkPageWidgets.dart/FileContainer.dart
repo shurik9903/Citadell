@@ -68,11 +68,14 @@ class _FileContainerState extends State<FileContainer> {
               alignment: Alignment.center,
               constraints: const BoxConstraints(maxWidth: 250),
               decoration: BoxDecoration(
-                  color:
-                      context.watch<OpenFiles>().selectedFile?.selectFile.key ==
-                              widget.key
-                          ? appTheme(context).tertiaryColor
-                          : appTheme(context).secondaryColor,
+                  color: context
+                              .watch<OpenFiles>()
+                              .selectedFile
+                              ?.fileContainer
+                              .key ==
+                          widget.key
+                      ? appTheme(context).tertiaryColor
+                      : appTheme(context).secondaryColor,
                   border: Border.all(color: appTheme(context).accentColor),
                   borderRadius: const BorderRadius.all(Radius.circular(5))),
               child: _textScrolls,
@@ -89,7 +92,7 @@ class _FileContainerState extends State<FileContainer> {
             },
             child: Container(
               decoration: BoxDecoration(
-                color: Color.fromARGB(220, 155, 0, 0),
+                color: const Color.fromARGB(220, 155, 0, 0),
                 shape: BoxShape.circle,
                 border: Border.all(color: appTheme(context).accentColor),
               ),

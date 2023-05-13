@@ -69,6 +69,7 @@ class _ReplaceDialogWindowsState extends State<ReplaceDialogWindows> {
 Future<dynamic> showReplaceDialogWindow(
     BuildContext context, String fileName) async {
   return await showDialog(
+    barrierDismissible: false,
     context: context,
     builder: (context) {
       return ReplaceDialogWindows(fileName: fileName);
