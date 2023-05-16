@@ -3,15 +3,15 @@ import 'package:flutter_univ/theme/AppThemeDefault.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/FileDialog.dart';
 
-class DropdownButtonExample extends StatefulWidget {
-  const DropdownButtonExample({super.key, required this.list});
+class DropdownTypeExample extends StatefulWidget {
+  const DropdownTypeExample({super.key, required this.list});
   final List<String> list;
 
   @override
-  State<DropdownButtonExample> createState() => _DropdownButtonExampleState();
+  State<DropdownTypeExample> createState() => _DropdownTypeExampleState();
 }
 
-class _DropdownButtonExampleState extends State<DropdownButtonExample> {
+class _DropdownTypeExampleState extends State<DropdownTypeExample> {
   late List<String> list;
   @override
   void initState() {

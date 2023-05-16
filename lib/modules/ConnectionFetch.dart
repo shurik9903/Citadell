@@ -48,8 +48,8 @@ Future<dynamic> callConnection(Function(bool connect) callback) async {
 }
 
 Future<dynamic> subscribeDataConnection(Stream<dynamic>? connection) async {
-  connection?.listen((data) {
-    data = jsonDecode(data) as Map<String, dynamic>;
+  connection?.listen((value) {
+    Map<String, dynamic> data = jsonDecode(value) as Map<String, dynamic>;
 
     String type = data['type'] as String? ?? ' ';
     String message = data['message'] as String? ?? ' ';
@@ -60,9 +60,9 @@ Future<dynamic> subscribeDataConnection(Stream<dynamic>? connection) async {
           print('Message: ${message}');
         }
         break;
-      case 'FILE':
+      case 'FileResult':
         {
-          print('File: ${message}');
+          print('FileResult: ${message}');
         }
         break;
       default:

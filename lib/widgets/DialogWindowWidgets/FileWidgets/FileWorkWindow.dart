@@ -45,7 +45,7 @@ class _FileWorkWindowState extends State<FileWorkWindow> {
               ),
               ContainerStyle(
                 text: "Тип файла",
-                child: DropdownButtonExample(
+                child: DropdownTypeExample(
                   list: context.read<FileWorking>().type,
                 ),
               ),

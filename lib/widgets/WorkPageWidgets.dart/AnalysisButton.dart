@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/widgets/DialogWindowWidgets/AlalysisDialog.dart';
+import 'package:flutter_univ/widgets/DialogWindowWidgets/FileDialog.dart';
 import 'package:provider/provider.dart';
 
 import '../../modules/AnalysisFetch.dart';
@@ -19,88 +21,28 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
       widthFactor: 0.8,
       heightFactor: 0.95,
       child: GestureDetector(
-        onTap: () {
-          fileAnalysisFetch('0').then((value) {}).catchError((error) {});
+        onTap: () async {
+          String? fileName = context.read<OpenFiles>().selectedFile?.name;
+          Map<int, String> columns = context.read<OpenFiles>().title;
 
-          // rabbitFetch().then((value) {
-          //   print(value);
-          // }).catchError((error) {
-          //   print(error.toString());
-          // });
+          if (fileName == null) {
+            return;
+          }
 
-          // getFileFetch("testid").then((value) {
-          //   print("Analysis OK");
+          await showAnalysisDialogWindow(context, fileName, columns)
+              .then((value) async {
+            if (value[0] == "cancel") {
+              return;
+            }
 
-          //   context.read<FileRow>().fileRow = testDataAnalysis
-          //       .map((data) => buildTableRow(
-          //           number: data.number ?? "",
-          //           type: data.type ?? "",
-          //           source: data.source ?? "",
-          //           contentText: data.contentText ?? "",
-          //           originalText: data.originalText ?? "",
-          //           date: data.date ?? "",
-          //           analyzedText: [
-          //             ...?data.analyzedText
-          //                 ?.map(
-          //                   (element) => TextSpan(
-          //                     recognizer: element.type != null
-          //                         ? (TapGestureRecognizer()
-          //                           ..onTap = () {
-          //                             dictionaryFetch(element.text ?? "")
-          //                                 .then((value) {
-          //                               print("Dictionary OK");
-          //                               print(element.text);
-
-          //                               context.read<TypeViewMenu>().show =
-          //                                   false;
-
-          //                               context
-          //                                   .read<DictioneryText>()
-          //                                   .dictText = [
-          //                                 TextSpan(
-          //                                   text: "${element.text} - ",
-          //                                   style: TextStyle(
-          //                                     color: element.type == null
-          //                                         ? appTheme(context).textColor1
-          //                                         : element.type?.typeColor,
-          //                                   ),
-          //                                 ),
-          //                                 TextSpan(
-          //                                   text: testWord[element.text
-          //                                           ?.toLowerCase()
-          //                                           .replaceAll(' ', '')] ??
-          //                                       "",
-          //                                   style: TextStyle(
-          //                                     color: element.type == null
-          //                                         ? appTheme(context).textColor1
-          //                                         : element.type?.typeColor,
-          //                                   ),
-          //                                 )
-          //                               ];
-          //                             }).catchError((error) {
-          //                               setState(() {
-          //                                 print(error.toString());
-          //                               });
-          //                             });
-          //                           })
-          //                         : null,
-          //                     text: element.text,
-          //                     style: TextStyle(
-          //                       color: element.type == null
-          //                           ? appTheme(context).textColor1
-          //                           : element.type?.typeColor,
-          //                     ),
-          //                   ),
-          //                 )
-          //                 .toList()
-          //           ],
-          //           probability: data.probability ?? ""))
-          //       .toList();
-          // }).catchError((error) {
-          //   setState(() {
-          //     print(error.toString());
-          //   });
-          // });
+            if (value[0] == "analysis") {
+              await fileAnalysisFetch(fileName, value[1].toString())
+                  .then((value) {})
+                  .catchError((error) {
+                print(error.toString());
+              });
+            }
+          });
         },
         child: Container(
           alignment: Alignment.center,

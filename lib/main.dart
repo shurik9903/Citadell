@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/data/UserData.dart';
 import 'package:flutter_univ/modules/FileFetch.dart';
+import 'package:flutter_univ/modules/WebSocketService.dart';
 import 'package:flutter_univ/pages/WorkPage.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/CustomDialog.dart';
@@ -76,6 +77,7 @@ class _MyAppState extends State<MyApp> {
   final ConnectStatus _connectStatus = ConnectStatus();
   final OpenFiles _openFile = OpenFiles();
   final TokenStatus _tokenStatus = TokenStatus();
+  final WebSocketService _socket = WebSocketServiceFactory.createInstance();
   EnumPage _enumPage = EnumPage.none;
 
   @override
@@ -95,6 +97,9 @@ class _MyAppState extends State<MyApp> {
         //Добавление Provider темы в MultiProvider
         ChangeNotifierProvider(
           create: (context) => _selectTheme,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => _socket,
         ),
         ChangeNotifierProvider(
           create: (context) => _connectStatus,
@@ -124,6 +129,7 @@ class _MyAppState extends State<MyApp> {
               var path = settings.name?.split('/');
               switch (path?[1]) {
                 case "login":
+                  _socket.close();
                   _enumPage = EnumPage.login;
                   break;
                 case "work":

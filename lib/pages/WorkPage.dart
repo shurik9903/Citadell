@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/data/FileData.dart';
@@ -62,11 +61,19 @@ class SelectFile {
 class OpenFiles extends ChangeNotifier {
   List<SelectFile> _openFile = [];
   SelectFile? _selectFile;
+  Map<int, String> _title = {};
   List<DataColumn> _fileTitle = [];
   List<DataRow> _fileRow = [];
   Map<String, String> _analyzedText = {};
 
   int _numberRow = 25;
+
+  set title(Map<int, String> title) {
+    _title = title;
+    notifyListeners();
+  }
+
+  Map<int, String> get title => _title;
 
   set analyzedText(Map<String, String> analyzedText) {
     _analyzedText = analyzedText;
@@ -157,6 +164,21 @@ class OpenFiles extends ChangeNotifier {
 
       try {
         if (docData is DocData) {
+          int titleLength = docData.title?.length ?? 0;
+
+          if (titleLength < 5) {
+            throw Exception(
+                "File Error 4: Файл поврежден и не может быть прочитан. Отсутствуют столбцы.");
+          }
+
+          docData.title
+              ?.getRange(0, (titleLength - 4))
+              .toList()
+              .asMap()
+              .forEach((key, value) {
+            title[key] = value;
+          });
+
           docData.title?.asMap().forEach((key, value) {
             dataTitle.add(DataColumn(
               label: TableColumn(
@@ -227,15 +249,19 @@ class OpenFiles extends ChangeNotifier {
       }
     }).catchError((error) {
       print(error.toString());
-      fileTitle = [];
-      fileRow = [];
+      clearData();
     });
+  }
+
+  void clearData() {
+    fileTitle = [];
+    fileRow = [];
+    title = {};
   }
 
   Future<void> refreshData() async {
     if (selectedFile == null) {
-      fileTitle = [];
-      fileRow = [];
+      clearData();
       return;
     }
 
@@ -290,27 +316,24 @@ class _WorkPageState extends State<WorkPage> {
   final DictioneryText _dictioneryText = DictioneryText();
   final TypeViewMenu _typeViewMenu = TypeViewMenu();
 
-  WebSocketService socket = WebSocketServiceFactory.createInstance();
-
   @override
   void initState() {
     super.initState();
 
-    callConnection((connect) {
-      context.read<ConnectStatus>().status = connect;
-    });
+    try {
+      callConnection((connect) {
+        context.read<ConnectStatus>().status = connect;
+      });
 
-    socket.open();
+      context.read<WebSocketService>().open();
 
-    socket.sendMessage();
+      // socket.sendMessage();
 
-    subscribeDataConnection(socket.connection?.stream);
-  }
-
-  @override
-  void dispose() {
-    socket.close();
-    super.dispose();
+      subscribeDataConnection(
+          context.read<WebSocketService>().connection?.stream);
+    } catch (e) {
+      print("Error WebSocket: " + e.toString());
+    }
   }
 
   @override
