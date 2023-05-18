@@ -19,11 +19,12 @@ class FileData {
 }
 
 class DocData {
-  DocData({this.msg, this.rowNumber, this.rows, this.title});
+  DocData({this.msg, this.rowNumber, this.rows, this.title, this.type});
 
   final String? msg;
   final int? rowNumber;
   final Map<String, dynamic>? rows;
+  final Map<String, dynamic>? type;
   final List<String>? title;
 
   factory DocData.fromJson(Map<String, dynamic> data) {
@@ -33,8 +34,13 @@ class DocData {
     final rowNumber = docData?["rowNumber"] as int?;
     final rows = docData?["rows"] as Map<String, dynamic>?;
     final title = (docData?["title"] as List<dynamic>?)?.cast<String>();
+    final type = docData?["type"] as Map<String, dynamic>?;
 
     return DocData(
-        msg: msg, rowNumber: rowNumber ?? 0, rows: rows, title: title);
+        msg: msg,
+        rowNumber: rowNumber ?? 0,
+        rows: rows,
+        title: title,
+        type: type);
   }
 }

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/main.dart';
 import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
-
-import '../../pages/WorkPage.dart';
 import '../../theme/AppThemeDefault.dart';
 
 class FileContainer extends StatefulWidget {
   final String name;
+  final FileStatus status;
+  late Function(FileStatus) setStatus;
 
-  const FileContainer({required super.key, required this.name});
+  FileContainer({required super.key, required this.name, required this.status});
 
   @override
   State<FileContainer> createState() => _FileContainerState();
@@ -16,9 +17,9 @@ class FileContainer extends StatefulWidget {
 
 class _FileContainerState extends State<FileContainer> {
   late String name;
-  late Key? selectKey;
-  late Function callback;
+  late FileStatus status;
   late Widget _textScrolls;
+  late Map<FileStatus, LinearGradient> colorStatus;
 
   void textMove() {
     setState(() {
@@ -26,6 +27,12 @@ class _FileContainerState extends State<FileContainer> {
         text: name,
         blankSpace: 30,
       );
+    });
+  }
+
+  void setStatus(FileStatus newStatus) {
+    setState(() {
+      status = newStatus;
     });
   }
 
@@ -43,11 +50,68 @@ class _FileContainerState extends State<FileContainer> {
   void initState() {
     super.initState();
     name = widget.name;
+    status = widget.status;
+    widget.setStatus = setStatus;
     textStop();
+
+    // colorStatus = {
+    //   FileStatus.nothing: const LinearGradient(
+    //     begin: Alignment.topLeft,
+    //     end: Alignment.bottomRight,
+    //     colors: [
+    //       Color.fromARGB(255, 0, 225, 255),
+    //       Color.fromARGB(255, 0, 255, 217)
+    //     ],
+    //   ),
+    //   FileStatus.processing: const LinearGradient(
+    //     begin: Alignment.topLeft,
+    //     end: Alignment.bottomRight,
+    //     colors: [
+    //       Color.fromARGB(255, 255, 217, 0),
+    //       Color.fromARGB(255, 255, 174, 0)
+    //     ],
+    //   ),
+    //   FileStatus.ready: const LinearGradient(
+    //     begin: Alignment.topLeft,
+    //     end: Alignment.bottomRight,
+    //     colors: [
+    //       Color.fromARGB(255, 81, 255, 0),
+    //       Color.fromARGB(255, 166, 255, 0)
+    //     ],
+    //   ),
+    // };
+
+    colorStatus = {
+      FileStatus.processing: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color.fromARGB(255, 255, 217, 0),
+          Color.fromARGB(255, 255, 174, 0)
+        ],
+      ),
+      FileStatus.ready: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color.fromARGB(255, 81, 255, 0),
+          Color.fromARGB(255, 166, 255, 0)
+        ],
+      ),
+    };
   }
 
   @override
   Widget build(BuildContext context) {
+    colorStatus[FileStatus.nothing] = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        appTheme(context).tertiaryColor,
+        appTheme(context).secondaryColor,
+      ],
+    );
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -68,22 +132,23 @@ class _FileContainerState extends State<FileContainer> {
               alignment: Alignment.center,
               constraints: const BoxConstraints(maxWidth: 250),
               decoration: BoxDecoration(
-                  color: context
-                              .watch<OpenFiles>()
-                              .selectedFile
-                              ?.fileContainer
-                              .key ==
-                          widget.key
-                      ? appTheme(context).tertiaryColor
-                      : appTheme(context).secondaryColor,
-                  border: Border.all(color: appTheme(context).accentColor),
+                  gradient: colorStatus[status],
+                  border: Border.all(
+                      color: context
+                                  .watch<OpenFiles>()
+                                  .selectedFile
+                                  ?.fileContainer
+                                  .key ==
+                              widget.key
+                          ? appTheme(context).tertiaryColor
+                          : appTheme(context).secondaryColor),
                   borderRadius: const BorderRadius.all(Radius.circular(5))),
               child: _textScrolls,
             ),
           ),
         ),
         Positioned(
-          top: 5,
+          top: 9,
           right: 0,
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,

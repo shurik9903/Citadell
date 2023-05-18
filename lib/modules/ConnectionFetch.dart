@@ -1,4 +1,8 @@
 import 'dart:convert';
+import 'dart:js';
+
+import 'package:flutter_univ/main.dart';
+import 'package:flutter_univ/modules/AnalysisFetch.dart';
 
 import '../data/Option.dart';
 import '../data/UserData.dart';
@@ -47,8 +51,9 @@ Future<dynamic> callConnection(Function(bool connect) callback) async {
   }
 }
 
-Future<dynamic> subscribeDataConnection(Stream<dynamic>? connection) async {
-  connection?.listen((value) {
+Future<dynamic> subscribeDataConnection(
+    Stream<dynamic>? connection, Function callback) async {
+  connection?.listen((value) async {
     Map<String, dynamic> data = jsonDecode(value) as Map<String, dynamic>;
 
     String type = data['type'] as String? ?? ' ';
@@ -62,7 +67,13 @@ Future<dynamic> subscribeDataConnection(Stream<dynamic>? connection) async {
         break;
       case 'FileResult':
         {
-          print('FileResult: ${message}');
+          var data = jsonDecode(message);
+
+          String fileName = data["fileName"].toString();
+          String uuid = data["uuid"].toString();
+
+          await getAnalysisFetch(uuid);
+          callback(fileName, FileStatus.ready);
         }
         break;
       default:

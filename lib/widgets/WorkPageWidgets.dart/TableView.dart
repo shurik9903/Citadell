@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/main.dart';
 import 'package:flutter_univ/modules/FileFetch.dart';
 import 'package:provider/provider.dart';
 
@@ -230,44 +231,58 @@ DataRow buildTableRow(
     required String analyzedText,
     required String probability,
     required bool update,
-    required bool incorrect}) {
-  return DataRow(cells: [
-    ...rowsText.map((value) => DataCell(Container(
+    required bool incorrect,
+    required String type}) {
+  Map<String, Color> typeColor = {
+    '1': Color.fromARGB(39, 255, 81, 0),
+    '2': Color.fromARGB(36, 43, 128, 255),
+    '3': Color.fromARGB(40, 136, 255, 72),
+  };
+
+  return DataRow(
+      color: MaterialStateProperty.resolveWith((Set<MaterialState> states) {
+        if (typeColor[type] != null) {
+          return typeColor[type];
+        }
+        return null; // Use the default value.
+      }),
+      cells: [
+        ...rowsText.map((value) => DataCell(Container(
+              alignment: Alignment.center,
+              child: Text(value),
+            ))),
+        DataCell(MAnalysisText(
+          parseText: [],
+        )),
+        DataCell(Container(
           alignment: Alignment.center,
-          child: Text(value),
-        ))),
-    DataCell(MAnalysisText(
-      parseText: [],
-    )),
-    DataCell(Container(
-      alignment: Alignment.center,
-      child: Text(
-        probability,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: int.tryParse(probability) != null
-              ? int.parse(probability) <= 30
-                  ? Color.fromARGB(255, 255, 0, 0)
-                  : int.parse(probability) <= 60
-                      ? Color.fromARGB(255, 255, 217, 0)
-                      : Color.fromARGB(255, 30, 255, 0)
-              : Color.fromARGB(255, 255, 255, 255),
+          child: Text(
+            probability,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: int.tryParse(probability) != null
+                  ? int.parse(probability) <= 30
+                      ? Color.fromARGB(255, 255, 0, 0)
+                      : int.parse(probability) <= 60
+                          ? Color.fromARGB(255, 255, 217, 0)
+                          : Color.fromARGB(255, 30, 255, 0)
+                  : Color.fromARGB(255, 255, 255, 255),
+            ),
+          ),
+        )),
+        DataCell(
+          MUpdateBox(
+            value: update,
+            index: rowIndex,
+            key: Key(rowIndex),
+          ),
         ),
-      ),
-    )),
-    DataCell(
-      MUpdateBox(
-        value: update,
-        index: rowIndex,
-        key: Key(rowIndex),
-      ),
-    ),
-    DataCell(
-      MReportBox(
-        value: incorrect,
-        index: rowIndex,
-        key: Key(rowIndex),
-      ),
-    ),
-  ]);
+        DataCell(
+          MReportBox(
+            value: incorrect,
+            index: rowIndex,
+            key: Key(rowIndex),
+          ),
+        ),
+      ]);
 }

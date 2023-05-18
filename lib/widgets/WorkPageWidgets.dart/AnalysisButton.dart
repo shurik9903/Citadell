@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/main.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/AlalysisDialog.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/FileDialog.dart';
+import 'package:flutter_univ/widgets/WorkPageWidgets.dart/LoadAnimation.dart';
 import 'package:provider/provider.dart';
 
 import '../../modules/AnalysisFetch.dart';
@@ -37,8 +39,11 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
 
             if (value[0] == "analysis") {
               await fileAnalysisFetch(fileName, value[1].toString())
-                  .then((value) {})
-                  .catchError((error) {
+                  .then((value) {
+                context
+                    .read<OpenFiles>()
+                    .changeStatusFile(fileName, FileStatus.processing);
+              }).catchError((error) {
                 print(error.toString());
               });
             }
@@ -64,10 +69,14 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
                     Radius.circular(20),
                   ),
                 ),
-          child: Text(
-            context.watch<TypeViewMenu>().show ? ">>" : "Анализировать",
-            style: TextStyle(fontSize: 30, color: appTheme(context).textColor2),
-          ),
+          child: context.watch<OpenFiles>().selectedFile?.status ==
+                  FileStatus.processing
+              ? const LoadAnimation()
+              : Text(
+                  context.watch<TypeViewMenu>().show ? ">>" : "Анализировать",
+                  style: TextStyle(
+                      fontSize: 30, color: appTheme(context).textColor2),
+                ),
         ),
       ),
     );

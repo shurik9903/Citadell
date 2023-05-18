@@ -30,15 +30,16 @@ class _MSidebarState extends State<MSidebar> {
           Expanded(
             flex: 20,
             child: context.watch<TypeViewMenu>().show
-                ? MMenuButton()
-                : MUserPanel(),
+                ? const MMenuButton()
+                : const MUserPanel(),
           ),
           Expanded(
             flex: 110,
-            child:
-                context.watch<TypeViewMenu>().show ? SizedBox() : MDictionary(),
+            child: context.watch<TypeViewMenu>().show
+                ? const SizedBox()
+                : const MDictionary(),
           ),
-          Expanded(
+          const Expanded(
             flex: 10,
             child: MAnalysisButton(),
           ),
