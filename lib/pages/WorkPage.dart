@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/modules/ConnectionFetch.dart';
-import 'package:flutter_univ/modules/WebSocketService.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 import '../theme/AppThemeDefault.dart';

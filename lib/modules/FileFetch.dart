@@ -36,7 +36,7 @@ Future<dynamic> getFileFetch(String fileName) async {
   throw Exception(response.statusCode);
 }
 
-Future<dynamic> saveFileFetch(LoadFile fileData) async {
+Future<dynamic> saveFileFetch(String fileData) async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
   var response = await http.post(
@@ -47,7 +47,7 @@ Future<dynamic> saveFileFetch(LoadFile fileData) async {
       "token": userData.token,
       "login": userData.login,
     },
-    body: jsonEncode(fileData),
+    body: fileData,
   );
 
   if (response.statusCode == 200) {
@@ -106,7 +106,8 @@ Future<dynamic> getAllUserFileFetch() async {
   throw Exception(response.statusCode);
 }
 
-Future<dynamic> getDocFetch(String name, {int start = 1, diapason = 25}) async {
+Future<dynamic> getDocFetch(String name,
+    {int start = 1, int diapason = 25}) async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
 

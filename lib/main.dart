@@ -4,17 +4,71 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/data/UserData.dart';
 import 'package:flutter_univ/modules/FileFetch.dart';
-import 'package:flutter_univ/modules/WebSocketService.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/CustomDialog.dart';
 import 'package:flutter_univ/widgets/WorkPageWidgets.dart/FileContainer.dart';
 import 'package:flutter_univ/widgets/WorkPageWidgets.dart/TableColumn.dart';
 import 'package:flutter_univ/widgets/WorkPageWidgets.dart/TableView.dart';
 import 'package:provider/provider.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'data/FileData.dart';
 import 'pages/RoutePage.dart';
 import 'theme/ThemeFactory.dart';
+
+class WebSocketService extends ChangeNotifier {
+  WebSocketChannel? connection;
+
+  final API_URL = "ws://localhost:8080/FSB/WSConnect";
+
+  Future<void> close() async {
+    connection?.sink.close(1000, 'Exit');
+  }
+
+  Future<bool> open() async {
+    try {
+      var userData = UserDataSingleton();
+
+      // print(Uri.parse("$API_URL/${userData.login}"));
+
+      // connection = WebSocketChannel.connect(Uri.parse(API_URL));
+
+      connection =
+          WebSocketChannel.connect(Uri.parse("$API_URL/${userData.login}"));
+
+      return true;
+    } catch (e) {
+      print('WebSocket connection failed: ' + e.toString());
+      return false;
+    }
+  }
+
+  void sendMessage() {
+    var userData = UserDataSingleton();
+
+    var JSONMessage = jsonEncode(<String, String>{
+      'login': userData.login,
+      'token': userData.token,
+      'message': 'Subscribe'
+    });
+
+    connection?.sink.add(JSONMessage);
+  }
+}
+
+class WebSocketServiceFactory {
+  static var _Socket;
+
+  static _createInstance() {
+    return WebSocketService();
+  }
+
+  static createInstance() {
+    WebSocketServiceFactory._Socket ??=
+        WebSocketServiceFactory._createInstance();
+    return WebSocketServiceFactory._Socket;
+  }
+}
 
 enum FileStatus { ready, processing, nothing }
 
@@ -78,7 +132,7 @@ class SelectFile {
 
 class OpenFiles extends ChangeNotifier {
   List<SelectFile> _openFiles = [];
-  SelectFile? _selectFile;
+  SelectFile? _selectedFile;
   Map<int, String> _title = {};
   List<DataColumn> _fileTitle = [];
   List<DataRow> _fileRow = [];
@@ -130,11 +184,11 @@ class OpenFiles extends ChangeNotifier {
   List<SelectFile> get openFile => _openFiles;
 
   set selectedFile(SelectFile? fileContainer) {
-    _selectFile = fileContainer;
+    _selectedFile = fileContainer;
     notifyListeners();
   }
 
-  SelectFile? get selectedFile => _selectFile;
+  SelectFile? get selectedFile => _selectedFile;
 
   Future<void> changeStatusFile(String fileName, FileStatus status) async {
     for (var element in _openFiles) {
@@ -154,7 +208,7 @@ class OpenFiles extends ChangeNotifier {
 
   void addFile(SelectFile openFile) {
     _openFiles.add(openFile);
-    _selectFile = openFile;
+    _selectedFile = openFile;
     notifyListeners();
   }
 

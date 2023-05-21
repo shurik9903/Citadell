@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/main.dart';
 import 'package:provider/provider.dart';
@@ -95,7 +97,7 @@ class _MFileViewState extends State<MFileView> {
     if (value is LoadFile) {
       bool read = true;
 
-      await saveFileFetch(value).then((result) async {
+      await saveFileFetch(jsonEncode(value)).then((result) async {
         if (result == "true") {
           await showReplaceDialogWindow(context, value.name)
               .then((select) async {
