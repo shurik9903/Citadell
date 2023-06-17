@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
@@ -13,7 +14,7 @@ class DropFileContainer extends StatefulWidget {
 }
 
 class _DropFileContainerState extends State<DropFileContainer> {
-  late DropzoneViewController dropController;
+  DropzoneViewController? dropController = null;
   bool isDroping = false;
   bool fileError = false;
 
@@ -88,15 +89,15 @@ class _DropFileContainerState extends State<DropFileContainer> {
                     ),
                     label: const Text("Выбрать файл"),
                     onPressed: () async {
-                      final events = await dropController.pickFiles();
+                      final events = await dropController?.pickFiles();
 
-                      if (events.isEmpty) {
-                        return;
+                      LoadFile? loadFile;
+                      if (events == null) {
+                        loadFile = await loadingFileButton();
+                      } else {
+                        loadFile = await loadingFile(events.first);
                       }
-
-                      LoadFile loadFile = await loadingFile(events.first);
-
-                      if (isInvalidFile(loadFile.type)) {
+                      if (loadFile != null && isInvalidFile(loadFile.type)) {
                         showSelectFileWindow(loadFile);
                       } else {
                         setState(() {
@@ -135,15 +136,43 @@ class _DropFileContainerState extends State<DropFileContainer> {
 
   Future<LoadFile> loadingFile(dynamic event) async {
     final name = event.name;
-    final mime = await dropController.getFileMIME(event);
-    final bytes = await dropController.getFileData(event);
-    final size = await dropController.getFileSize(event);
-    final url = await dropController.createFileUrl(event);
+    final mime = await dropController!.getFileMIME(event);
+    final bytes = await dropController!.getFileData(event);
+    final size = await dropController!.getFileSize(event);
+    final url = await dropController!.createFileUrl(event);
 
     return LoadFile(
         fullName: name,
         type: name.substring(name.lastIndexOf('.')),
         bytes: bytes,
+        size: size);
+  }
+
+  Future<LoadFile?> loadingFileButton() async {
+    PlatformFile? file;
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
+      file = result?.files.first;
+      if (file == null) {
+        return null;
+      }
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+    // print(file.bytes);
+    // print(file.size);
+    // print(file.extension);
+    // print(file.path);
+
+    final name = file.name;
+    final bytes = file.bytes;
+    final size = file.size;
+
+    return LoadFile(
+        fullName: name,
+        type: name.substring(name.lastIndexOf('.')),
+        bytes: bytes!,
         size: size);
   }
 

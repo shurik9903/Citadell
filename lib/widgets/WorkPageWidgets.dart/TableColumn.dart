@@ -1,18 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/main.dart';
+import 'package:provider/provider.dart';
 
 import '../../theme/AppThemeDefault.dart';
+
+class AllSelect extends StatefulWidget {
+  const AllSelect({super.key, this.value});
+
+  final bool? value;
+
+  @override
+  State<AllSelect> createState() => _AllSelectState();
+}
+
+class _AllSelectState extends State<AllSelect> {
+  late bool? select;
+
+  @override
+  void initState() {
+    super.initState();
+    select = widget.value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    select = context.watch<OpenFiles>().allSelect;
+
+    return Container(
+      alignment: Alignment.center,
+      child: Checkbox(
+        tristate: true,
+        value: select,
+        activeColor: select == true
+            ? const Color.fromARGB(255, 0, 255, 0)
+            : select == null
+                ? const Color.fromARGB(255, 255, 0, 0)
+                : null,
+        onChanged: (value) {
+          value ??= false;
+          setState(() {
+            context.read<OpenFiles>().allSelect = value;
+          });
+
+          // context.read<OpenFiles>().saveReportData(jsonEncode({
+          //       'type': 'update',
+          //       'index': index,
+          //       'select': select.toString(),
+          //     }));
+        },
+      ),
+    );
+  }
+}
 
 class TableColumn extends StatefulWidget {
   TableColumn({
     super.key,
     required this.index,
     required this.length,
-    this.text,
+    required this.child,
   });
 
   int index;
   int length;
-  String? text;
+  Widget child;
 
   @override
   State<TableColumn> createState() => _TableColumnState();
@@ -21,7 +72,7 @@ class TableColumn extends StatefulWidget {
 class _TableColumnState extends State<TableColumn> {
   late int index;
   late int length;
-  late String text;
+  late Widget child;
 
   @override
   void initState() {
@@ -29,7 +80,7 @@ class _TableColumnState extends State<TableColumn> {
 
     index = widget.index;
     length = widget.length;
-    text = widget.text ?? "";
+    child = widget.child;
   }
 
   @override
@@ -50,7 +101,7 @@ class _TableColumnState extends State<TableColumn> {
                       ? const BorderRadius.only(topRight: Radius.circular(10))
                       : null),
           alignment: Alignment.center,
-          child: Text(text)),
+          child: child),
     );
   }
 }

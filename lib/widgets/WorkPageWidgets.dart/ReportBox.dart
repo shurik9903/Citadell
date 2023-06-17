@@ -76,10 +76,14 @@ class _MReportBoxState extends State<MReportBox> {
     });
 
     context.read<OpenFiles>().saveReportData(jsonEncode({
-          'type': 'report',
-          'index': index,
-          'select': select.toString(),
-          'message': message
+          'data': [
+            {
+              'type': 'report',
+              'index': index,
+              'select': select.toString(),
+              'message': message
+            }
+          ]
         }));
   }
 }

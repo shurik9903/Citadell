@@ -7,7 +7,7 @@ class LoginData {
   final String? token;
 
   factory LoginData.fromJson(Map<String, dynamic> data) {
-    final msg = data['msg'] as String?;
+    final msg = data['Msg'] as String?;
     final login = data['login'] as String?;
     final token = data['token'] as String?;
     return LoginData(msg: msg, login: login, token: token);

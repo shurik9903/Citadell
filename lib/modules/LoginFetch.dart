@@ -28,6 +28,8 @@ Future<dynamic> loginFetch(String login, String password) async {
     userData.login = loginData.login ?? '';
     userData.token = loginData.token ?? '';
 
+    print(loginData.msg);
+
     return '';
   }
   if (response.statusCode == 401) {

@@ -10,7 +10,7 @@ class MUpdateBox extends StatefulWidget {
   const MUpdateBox({super.key, required this.value, required this.index});
 
   final bool value;
-  final String index;
+  final int index;
 
   @override
   State<MUpdateBox> createState() => _MUpdateBoxState();
@@ -18,7 +18,7 @@ class MUpdateBox extends StatefulWidget {
 
 class _MUpdateBoxState extends State<MUpdateBox> {
   late bool select;
-  late String index;
+  late int index;
 
   @override
   void initState() {
@@ -29,6 +29,8 @@ class _MUpdateBoxState extends State<MUpdateBox> {
 
   @override
   Widget build(BuildContext context) {
+    select = context.watch<OpenFiles>().selectedRow[index] ?? false;
+
     return Container(
       alignment: Alignment.center,
       child: Checkbox(
@@ -36,13 +38,17 @@ class _MUpdateBoxState extends State<MUpdateBox> {
         activeColor: const Color.fromARGB(255, 0, 170, 255),
         onChanged: (value) {
           setState(() {
-            select = value!;
+            context.read<OpenFiles>().selectedRow[index] = value!;
           });
 
           context.read<OpenFiles>().saveReportData(jsonEncode({
-                'type': 'update',
-                'index': index,
-                'select': select.toString(),
+                'data': [
+                  {
+                    'type': 'update',
+                    'index': index,
+                    'select': select.toString(),
+                  }
+                ]
               }));
         },
       ),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:js';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -130,15 +131,85 @@ class SelectFile {
   FileContainer get fileContainer => _fileContainer;
 }
 
+class TableOption extends ChangeNotifier {
+  static bool _fixHeader = false;
+  static bool _fixStart = false;
+  static bool _fixEnd = false;
+
+  static int _lengthStart = 0;
+  static int _lengthEnd = 0;
+
+  int get lengthStart => _lengthStart;
+
+  set lengthStart(int lengthStart) {
+    _lengthStart = lengthStart;
+    notifyListeners();
+  }
+
+  int get lengthEnd => _lengthEnd;
+
+  set lengthEnd(int lengthEnd) {
+    _lengthEnd = lengthEnd;
+    notifyListeners();
+  }
+
+  bool get fixHeader => _fixHeader;
+
+  set fixHeader(bool fixHeader) {
+    _fixHeader = fixHeader;
+    notifyListeners();
+  }
+
+  bool get fixStart => _fixStart;
+
+  set fixStart(bool fixStart) {
+    _fixStart = fixStart;
+    notifyListeners();
+  }
+
+  bool get fixEnd => _fixEnd;
+
+  set fixEnd(bool fixEnd) {
+    _fixEnd = fixEnd;
+    notifyListeners();
+  }
+}
+
 class OpenFiles extends ChangeNotifier {
   List<SelectFile> _openFiles = [];
   SelectFile? _selectedFile;
   Map<int, String> _title = {};
-  List<DataColumn> _fileTitle = [];
-  List<DataRow> _fileRow = [];
+  // List<DataColumn> _fileTitle = [];
+  // List<DataRow> _fileRow = [];
+  Map<int, String> _fileTitle = {};
+  Map<int, List<dynamic>> _fileRow = {};
   Map<String, String> _analyzedText = {};
+  Map<int, bool> _selectedRow = {};
+  bool? _allSelect = false;
 
   int _numberRow = 25;
+
+  Map<int, bool> get selectedRow => _selectedRow;
+
+  set selectedRow(Map<int, bool> selectedRow) {
+    _selectedRow = selectedRow;
+    notifyListeners();
+  }
+
+  bool? get allSelect => _allSelect;
+
+  set allSelect(bool? allSelect) {
+    _allSelect = allSelect;
+
+    () async {
+      if (allSelect != null) {
+        await saveReportData(jsonEncode({'allSelect': allSelect.toString()}));
+        refreshData();
+      }
+    }();
+
+    notifyListeners();
+  }
 
   set title(Map<int, String> title) {
     _title = title;
@@ -154,19 +225,33 @@ class OpenFiles extends ChangeNotifier {
 
   Map<String, String> get analyzedText => _analyzedText;
 
-  set fileTitle(List<DataColumn> fileTitle) {
+  set fileTitle(Map<int, String> fileTitle) {
     _fileTitle = fileTitle;
     notifyListeners();
   }
 
-  List<DataColumn> get fileTitle => _fileTitle;
+  Map<int, String> get fileTitle => _fileTitle;
 
-  set fileRow(List<DataRow> fileRow) {
+  set fileRow(Map<int, List<dynamic>> fileRow) {
     _fileRow = fileRow;
     notifyListeners();
   }
 
-  List<DataRow> get fileRow => _fileRow;
+  Map<int, List<dynamic>> get fileRow => _fileRow;
+
+  // set fileTitle(List<DataColumn> fileTitle) {
+  //   _fileTitle = fileTitle;
+  //   notifyListeners();
+  // }
+
+  // List<DataColumn> get fileTitle => _fileTitle;
+
+  // set fileRow(List<DataRow> fileRow) {
+  //   _fileRow = fileRow;
+  //   notifyListeners();
+  // }
+
+  // List<DataRow> get fileRow => _fileRow;
 
   set numberRow(int numberRow) {
     _numberRow = numberRow;
@@ -252,10 +337,8 @@ class OpenFiles extends ChangeNotifier {
       {int start = 1, bool newFile = false}) async {
     return await getDocFetch(name, start: start, diapason: numberRow)
         .then((docData) {
-      print("File OK");
-
-      List<DataColumn> dataTitle = [];
-      List<DataRow> dataRow = [];
+      // List<DataColumn> dataTitle = [];
+      // List<DataRow> dataRow = [];
       int maxRowLenght = -1;
 
       try {
@@ -275,15 +358,28 @@ class OpenFiles extends ChangeNotifier {
             title[key] = value;
           });
 
-          docData.title?.asMap().forEach((key, value) {
-            dataTitle.add(DataColumn(
-              label: TableColumn(
-                index: key,
-                text: value,
-                length: docData.title?.length ?? 0,
-              ),
-            ));
-          });
+          // docData.title?.asMap().forEach((key, value) {
+          //   // if (value == "Обновить") {
+          //   //   dataTitle.add(DataColumn(
+          //   //     label: TableColumn(
+          //   //       index: key,
+          //   //       length: docData.title?.length ?? 0,
+          //   //       child: const AllSelect(value: false),
+          //   //     ),
+          //   //   ));
+          //   // } else {
+          //   //   dataTitle.add(DataColumn(
+          //   //     label: TableColumn(
+          //   //       index: key,
+          //   //       length: docData.title?.length ?? 0,
+          //   //       child: Text(value),
+          //   //     ),
+          //   //   ));
+          //   // }
+          // });
+
+          selectedRow = {};
+          // docData.rows?.cast<String, List<dynamic>>();
 
           docData.rows?.forEach((key, value) {
             if (value is List<dynamic>) {
@@ -291,18 +387,20 @@ class OpenFiles extends ChangeNotifier {
                 maxRowLenght = value.length;
               }
 
-              if (value.isNotEmpty) {
-                analyzedText[key] = value[maxRowLenght - 4];
+              // if (value.isNotEmpty) {
+              //   analyzedText[key] = value[maxRowLenght - 4];
 
-                dataRow.add(buildTableRow(
-                    rowIndex: (int.tryParse(key)! - 1).toString(),
-                    rowsText: [...value.getRange(0, maxRowLenght - 4)],
-                    analyzedText: value[maxRowLenght - 4],
-                    probability: value[maxRowLenght - 3],
-                    update: value[maxRowLenght - 2] == "true",
-                    incorrect: value[maxRowLenght - 1] == "true",
-                    type: docData.type?[key] ?? 0));
-              }
+              //   selectedRow[(int.tryParse(key)! - 1)] =
+              //       (value[maxRowLenght - 2] == "true");
+              //   dataRow.add(buildTableRow(
+              //     rowIndex: (int.tryParse(key)! - 1),
+              //     rowsText: [...value.getRange(0, maxRowLenght - 4)],
+              //     analyzedText: value[maxRowLenght - 4],
+              //     probability: value[maxRowLenght - 3],
+              //     incorrect: value[maxRowLenght - 1] == "true",
+              //     type: docData.type?[key] ?? 0,
+              //   ));
+              // }
             } else {
               throw Exception(
                   "File Error 1: Файл поврежден и не может быть прочитан.");
@@ -313,7 +411,9 @@ class OpenFiles extends ChangeNotifier {
               "File Error 2: Файл поврежден и не может быть прочитан.");
         }
 
-        if (dataTitle.length != maxRowLenght) {
+        // print(dataTitle.length)
+
+        if (docData.title?.length != maxRowLenght) {
           throw Exception(
               "File Error 3: Файл поврежден и не может быть прочитан. Количество строк превышает количество столбцов.");
         }
@@ -328,8 +428,15 @@ class OpenFiles extends ChangeNotifier {
           addFile(selectFile);
         }
 
-        fileTitle = dataTitle;
-        fileRow = dataRow;
+        fileTitle = docData.title?.asMap() ?? {};
+
+        Map<int, List<dynamic>> rows = {};
+
+        docData.rows?.forEach((key, value) {
+          rows[int.parse(key)] = value as List<dynamic>;
+        });
+
+        fileRow = rows;
       } catch (e) {
         throw Exception("Error: ${e.toString()}");
       }
@@ -340,9 +447,11 @@ class OpenFiles extends ChangeNotifier {
   }
 
   void clearData() {
-    fileTitle = [];
-    fileRow = [];
+    fileTitle = {};
+    fileRow = {};
     title = {};
+    allSelect = false;
+    selectedRow = {};
   }
 
   Future<void> refreshData() async {
@@ -437,6 +546,7 @@ class _MyAppState extends State<MyApp> {
   final OpenFiles _openFile = OpenFiles();
   final TokenStatus _tokenStatus = TokenStatus();
   final WebSocketService _socket = WebSocketServiceFactory.createInstance();
+  final TableOption _tableOption = TableOption();
   EnumPage _enumPage = EnumPage.none;
 
   @override
@@ -468,6 +578,9 @@ class _MyAppState extends State<MyApp> {
         ),
         ChangeNotifierProvider(
           create: (context) => _tokenStatus,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => _tableOption,
         ),
       ],
       builder: (context, child) {
