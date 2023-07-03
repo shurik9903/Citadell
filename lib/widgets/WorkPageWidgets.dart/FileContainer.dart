@@ -54,33 +54,6 @@ class _FileContainerState extends State<FileContainer> {
     widget.setStatus = setStatus;
     textStop();
 
-    // colorStatus = {
-    //   FileStatus.nothing: const LinearGradient(
-    //     begin: Alignment.topLeft,
-    //     end: Alignment.bottomRight,
-    //     colors: [
-    //       Color.fromARGB(255, 0, 225, 255),
-    //       Color.fromARGB(255, 0, 255, 217)
-    //     ],
-    //   ),
-    //   FileStatus.processing: const LinearGradient(
-    //     begin: Alignment.topLeft,
-    //     end: Alignment.bottomRight,
-    //     colors: [
-    //       Color.fromARGB(255, 255, 217, 0),
-    //       Color.fromARGB(255, 255, 174, 0)
-    //     ],
-    //   ),
-    //   FileStatus.ready: const LinearGradient(
-    //     begin: Alignment.topLeft,
-    //     end: Alignment.bottomRight,
-    //     colors: [
-    //       Color.fromARGB(255, 81, 255, 0),
-    //       Color.fromARGB(255, 166, 255, 0)
-    //     ],
-    //   ),
-    // };
-
     colorStatus = {
       FileStatus.processing: const LinearGradient(
         begin: Alignment.topLeft,

@@ -84,10 +84,10 @@ class _WorkPageState extends State<WorkPage> {
               children: [
                 Expanded(
                   flex: context.watch<TypeViewMenu>().show ? 1500 : 900,
-                  child: Column(
+                  child: const Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     mainAxisSize: MainAxisSize.max,
-                    children: const [
+                    children: [
                       Expanded(
                         flex: 75,
                         child: MFileView(),

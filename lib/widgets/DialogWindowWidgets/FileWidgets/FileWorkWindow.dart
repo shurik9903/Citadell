@@ -61,11 +61,11 @@ class _FileWorkWindowState extends State<FileWorkWindow> {
 
   Widget tableSizeWindow() {
     return context.watch<FileWorking>().dropdownValue == ".xls"
-        ? ContainerStyle(
+        ? const ContainerStyle(
             text: "Размер таблицы",
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
-              children: const [ColRowController()],
+              children: [ColRowController()],
             ),
           )
         : const SizedBox.shrink();

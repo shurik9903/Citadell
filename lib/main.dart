@@ -2,14 +2,15 @@ import 'dart:convert';
 import 'dart:js';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/data/UserData.dart';
 import 'package:flutter_univ/modules/FileFetch.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/CustomDialog.dart';
+import 'package:flutter_univ/widgets/DialogWindowWidgets/MessageDialog.dart';
 import 'package:flutter_univ/widgets/WorkPageWidgets.dart/FileContainer.dart';
-import 'package:flutter_univ/widgets/WorkPageWidgets.dart/TableColumn.dart';
-import 'package:flutter_univ/widgets/WorkPageWidgets.dart/TableView.dart';
+
 import 'package:provider/provider.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -29,10 +30,6 @@ class WebSocketService extends ChangeNotifier {
   Future<bool> open() async {
     try {
       var userData = UserDataSingleton();
-
-      // print(Uri.parse("$API_URL/${userData.login}"));
-
-      // connection = WebSocketChannel.connect(Uri.parse(API_URL));
 
       connection =
           WebSocketChannel.connect(Uri.parse("$API_URL/${userData.login}"));
@@ -79,6 +76,7 @@ class SelectFile {
   late int _start = 1;
   late int _numberRows = 1;
   late FileContainer _fileContainer;
+  late TableOption _tableOption;
 
   SelectFile(
       {required String name, required int start, required int numberRows}) {
@@ -94,6 +92,13 @@ class SelectFile {
       name: name,
       status: status,
     );
+    _tableOption = TableOption();
+  }
+
+  TableOption get tableOption => _tableOption;
+
+  set tableOption(TableOption tableOption) {
+    _tableOption = tableOption;
   }
 
   FileStatus get status => _status;
@@ -131,13 +136,83 @@ class SelectFile {
   FileContainer get fileContainer => _fileContainer;
 }
 
-class TableOption extends ChangeNotifier {
-  static bool _fixHeader = false;
-  static bool _fixStart = false;
-  static bool _fixEnd = false;
+class TypeRow {
+  late Color _color;
+  late String _name;
 
-  static int _lengthStart = 0;
-  static int _lengthEnd = 0;
+  TypeRow(Color color, String name) {
+    _color = color;
+    _name = name;
+  }
+
+  Color get color => _color;
+
+  set color(Color color) {
+    _color = color;
+  }
+
+  String get name => _name;
+
+  set name(String name) {
+    _name = name;
+  }
+}
+
+class TableOption extends ChangeNotifier {
+  bool _fixHeader = true;
+  bool _fixStart = false;
+  bool _fixEnd = false;
+
+  bool _enableColorStart = true;
+  bool _enableColorEnd = true;
+
+  Color _colorStart = Colors.blue;
+  Color _colorEnd = Colors.orange;
+
+  int _lengthStart = 0;
+  int _lengthEnd = 0;
+
+  final Map<int, TypeRow> _typeRow = {
+    1: TypeRow(const Color.fromARGB(39, 255, 247, 0), "Власть"),
+    2: TypeRow(const Color.fromARGB(33, 131, 255, 43), "Церковь"),
+    3: TypeRow(const Color.fromARGB(40, 255, 72, 72), "Врачи/Медицина"),
+    4: TypeRow(const Color.fromARGB(40, 0, 255, 38), "Нерусские"),
+    5: TypeRow(const Color.fromARGB(40, 255, 154, 31), "ЛГБТ"),
+  };
+
+  Map<int, TypeRow> get typeRow => _typeRow;
+
+  Color get colorStart => _colorStart;
+
+  set colorStart(Color colorStart) {
+    _colorStart = colorStart;
+
+    notifyListeners();
+  }
+
+  Color get colorEnd => _colorEnd;
+
+  set colorEnd(Color colorEnd) {
+    _colorEnd = colorEnd;
+
+    notifyListeners();
+  }
+
+  bool get enableColorStart => _enableColorStart;
+
+  set enableColorStart(bool enableColorStart) {
+    _enableColorStart = enableColorStart;
+
+    notifyListeners();
+  }
+
+  bool get enableColorEnd => _enableColorEnd;
+
+  set enableColorEnd(bool enableColorEnd) {
+    _enableColorEnd = enableColorEnd;
+
+    notifyListeners();
+  }
 
   int get lengthStart => _lengthStart;
 
@@ -157,6 +232,7 @@ class TableOption extends ChangeNotifier {
 
   set fixHeader(bool fixHeader) {
     _fixHeader = fixHeader;
+
     notifyListeners();
   }
 
@@ -178,16 +254,30 @@ class TableOption extends ChangeNotifier {
 class OpenFiles extends ChangeNotifier {
   List<SelectFile> _openFiles = [];
   SelectFile? _selectedFile;
+  // TableOption? _tableOption;
   Map<int, String> _title = {};
-  // List<DataColumn> _fileTitle = [];
-  // List<DataRow> _fileRow = [];
   Map<int, String> _fileTitle = {};
   Map<int, List<dynamic>> _fileRow = {};
+  Map<int, int> _rowsType = {};
   Map<String, String> _analyzedText = {};
   Map<int, bool> _selectedRow = {};
   bool? _allSelect = false;
 
   int _numberRow = 25;
+
+  // TableOption? get tableOption => _tableOption;
+
+  // set tableOption(TableOption? tableOption) {
+  //   _tableOption = tableOption;
+  //   notifyListeners();
+  // }
+
+  Map<int, int> get rowsType => _rowsType;
+
+  set rowsType(Map<int, int> rowsType) {
+    _rowsType = rowsType;
+    notifyListeners();
+  }
 
   Map<int, bool> get selectedRow => _selectedRow;
 
@@ -202,7 +292,7 @@ class OpenFiles extends ChangeNotifier {
     _allSelect = allSelect;
 
     () async {
-      if (allSelect != null) {
+      if (allSelect != null && selectedFile != null) {
         await saveReportData(jsonEncode({'allSelect': allSelect.toString()}));
         refreshData();
       }
@@ -238,20 +328,6 @@ class OpenFiles extends ChangeNotifier {
   }
 
   Map<int, List<dynamic>> get fileRow => _fileRow;
-
-  // set fileTitle(List<DataColumn> fileTitle) {
-  //   _fileTitle = fileTitle;
-  //   notifyListeners();
-  // }
-
-  // List<DataColumn> get fileTitle => _fileTitle;
-
-  // set fileRow(List<DataRow> fileRow) {
-  //   _fileRow = fileRow;
-  //   notifyListeners();
-  // }
-
-  // List<DataRow> get fileRow => _fileRow;
 
   set numberRow(int numberRow) {
     _numberRow = numberRow;
@@ -325,20 +401,22 @@ class OpenFiles extends ChangeNotifier {
     }
   }
 
-  Future<void> loadFile(String name) async {
+  Future<bool> loadFile(String name) async {
+    if (openFile.firstWhereOrNull((element) => element._name == name) != null) {
+      return false;
+    }
+
     await getFileFetch(name).then((value) {}).catchError((error) {
       print(error.toString());
       clearData();
     });
-    await addData(name, newFile: true);
+
+    return await addData(name, newFile: true);
   }
 
-  Future<void> addData(String name,
+  Future<bool> addData(String name,
       {int start = 1, bool newFile = false}) async {
-    return await getDocFetch(name, start: start, diapason: numberRow)
-        .then((docData) {
-      // List<DataColumn> dataTitle = [];
-      // List<DataRow> dataRow = [];
+    await getDocFetch(name, start: start, diapason: numberRow).then((docData) {
       int maxRowLenght = -1;
 
       try {
@@ -358,49 +436,17 @@ class OpenFiles extends ChangeNotifier {
             title[key] = value;
           });
 
-          // docData.title?.asMap().forEach((key, value) {
-          //   // if (value == "Обновить") {
-          //   //   dataTitle.add(DataColumn(
-          //   //     label: TableColumn(
-          //   //       index: key,
-          //   //       length: docData.title?.length ?? 0,
-          //   //       child: const AllSelect(value: false),
-          //   //     ),
-          //   //   ));
-          //   // } else {
-          //   //   dataTitle.add(DataColumn(
-          //   //     label: TableColumn(
-          //   //       index: key,
-          //   //       length: docData.title?.length ?? 0,
-          //   //       child: Text(value),
-          //   //     ),
-          //   //   ));
-          //   // }
-          // });
-
           selectedRow = {};
-          // docData.rows?.cast<String, List<dynamic>>();
+          rowsType = docData.type?.map((key, value) {
+                return MapEntry(int.parse(key), int.parse(value as String));
+              }) ??
+              {};
 
           docData.rows?.forEach((key, value) {
             if (value is List<dynamic>) {
               if (maxRowLenght < value.length) {
                 maxRowLenght = value.length;
               }
-
-              // if (value.isNotEmpty) {
-              //   analyzedText[key] = value[maxRowLenght - 4];
-
-              //   selectedRow[(int.tryParse(key)! - 1)] =
-              //       (value[maxRowLenght - 2] == "true");
-              //   dataRow.add(buildTableRow(
-              //     rowIndex: (int.tryParse(key)! - 1),
-              //     rowsText: [...value.getRange(0, maxRowLenght - 4)],
-              //     analyzedText: value[maxRowLenght - 4],
-              //     probability: value[maxRowLenght - 3],
-              //     incorrect: value[maxRowLenght - 1] == "true",
-              //     type: docData.type?[key] ?? 0,
-              //   ));
-              // }
             } else {
               throw Exception(
                   "File Error 1: Файл поврежден и не может быть прочитан.");
@@ -410,8 +456,6 @@ class OpenFiles extends ChangeNotifier {
           throw Exception(
               "File Error 2: Файл поврежден и не может быть прочитан.");
         }
-
-        // print(dataTitle.length)
 
         if (docData.title?.length != maxRowLenght) {
           throw Exception(
@@ -444,14 +488,18 @@ class OpenFiles extends ChangeNotifier {
       print(error.toString());
       clearData();
     });
+
+    return true;
   }
 
   void clearData() {
     fileTitle = {};
     fileRow = {};
     title = {};
-    allSelect = false;
+    rowsType = {};
+    analyzedText = {};
     selectedRow = {};
+    allSelect = false;
   }
 
   Future<void> refreshData() async {
@@ -546,7 +594,7 @@ class _MyAppState extends State<MyApp> {
   final OpenFiles _openFile = OpenFiles();
   final TokenStatus _tokenStatus = TokenStatus();
   final WebSocketService _socket = WebSocketServiceFactory.createInstance();
-  final TableOption _tableOption = TableOption();
+  // final TableOption _tableOption = TableOption();
   EnumPage _enumPage = EnumPage.none;
 
   @override
@@ -579,9 +627,9 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(
           create: (context) => _tokenStatus,
         ),
-        ChangeNotifierProvider(
-          create: (context) => _tableOption,
-        ),
+        // ChangeNotifierProvider(
+        //   create: (context) => _tableOption,
+        // ),
       ],
       builder: (context, child) {
         if (context.watch<TokenStatus>().tokenStatus == true) {
@@ -744,7 +792,7 @@ class _DrawerMenuState extends State<DrawerMenu> {
           },
         ),
         ListTile(
-          title: Text("Закрыть"),
+          title: const Text("Закрыть"),
           onTap: () {
             Navigator.pop(context);
           },
@@ -779,8 +827,12 @@ class _SelectFileContainerState extends State<SelectFileContainer> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        context.read<OpenFiles>().loadFile(name);
+      onTap: () async {
+        context.read<OpenFiles>().loadFile(name).then((value) {
+          if (!value) {
+            showMessageDialogWindow(context, "Файл с именем $name уже открыт!");
+          }
+        });
         Navigator.pop(context, "cancel");
       },
       child: Container(

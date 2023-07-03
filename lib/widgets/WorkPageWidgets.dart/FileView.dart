@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/main.dart';
+import 'package:flutter_univ/widgets/DialogWindowWidgets/MessageDialog.dart';
 import 'package:provider/provider.dart';
 import '../../modules/FileFetch.dart';
 import '../../pages/WorkPage.dart';
@@ -95,6 +97,16 @@ class _MFileViewState extends State<MFileView> {
 
   Future<void> saveFile(dynamic value) async {
     if (value is LoadFile) {
+      if (context
+              .read<OpenFiles>()
+              .openFile
+              .firstWhereOrNull((element) => element.name == value.fullName) !=
+          null) {
+        showMessageDialogWindow(
+            context, "Файл с именем ${value.fullName} уже открыт!");
+        return;
+      }
+
       bool read = true;
 
       await saveFileFetch(jsonEncode(value)).then((result) async {

@@ -29,29 +29,25 @@ class _MUpdateBoxState extends State<MUpdateBox> {
 
   @override
   Widget build(BuildContext context) {
-    select = context.watch<OpenFiles>().selectedRow[index] ?? false;
+    select = context.watch<OpenFiles>().selectedRow[index] ?? widget.value;
+    return Checkbox(
+      value: select,
+      activeColor: const Color.fromARGB(255, 0, 170, 255),
+      onChanged: (value) {
+        setState(() {
+          context.read<OpenFiles>().selectedRow[index] = value!;
+        });
 
-    return Container(
-      alignment: Alignment.center,
-      child: Checkbox(
-        value: select,
-        activeColor: const Color.fromARGB(255, 0, 170, 255),
-        onChanged: (value) {
-          setState(() {
-            context.read<OpenFiles>().selectedRow[index] = value!;
-          });
-
-          context.read<OpenFiles>().saveReportData(jsonEncode({
-                'data': [
-                  {
-                    'type': 'update',
-                    'index': index,
-                    'select': select.toString(),
-                  }
-                ]
-              }));
-        },
-      ),
+        context.read<OpenFiles>().saveReportData(jsonEncode({
+              'data': [
+                {
+                  'type': 'update',
+                  'index': index - 1,
+                  'select': value.toString(),
+                }
+              ]
+            }));
+      },
     );
   }
 }

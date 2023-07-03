@@ -45,6 +45,8 @@ dependencies:
   marquee: ^2.2.3
   flutter_dropzone: ^3.0.5
   linked_scroll_controller: ^0.2.0
+  collection: ^1.17.1
+  
   
 dev_dependencies:
   flutter_test:

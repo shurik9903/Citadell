@@ -26,29 +26,20 @@ class _AllSelectState extends State<AllSelect> {
   Widget build(BuildContext context) {
     select = context.watch<OpenFiles>().allSelect;
 
-    return Container(
-      alignment: Alignment.center,
-      child: Checkbox(
-        tristate: true,
-        value: select,
-        activeColor: select == true
-            ? const Color.fromARGB(255, 0, 255, 0)
-            : select == null
-                ? const Color.fromARGB(255, 255, 0, 0)
-                : null,
-        onChanged: (value) {
-          value ??= false;
-          setState(() {
-            context.read<OpenFiles>().allSelect = value;
-          });
-
-          // context.read<OpenFiles>().saveReportData(jsonEncode({
-          //       'type': 'update',
-          //       'index': index,
-          //       'select': select.toString(),
-          //     }));
-        },
-      ),
+    return Checkbox(
+      tristate: true,
+      value: select,
+      activeColor: select == true
+          ? const Color.fromARGB(255, 0, 255, 0)
+          : select == null
+              ? const Color.fromARGB(255, 255, 0, 0)
+              : null,
+      onChanged: (value) {
+        value ??= false;
+        setState(() {
+          context.read<OpenFiles>().allSelect = value;
+        });
+      },
     );
   }
 }

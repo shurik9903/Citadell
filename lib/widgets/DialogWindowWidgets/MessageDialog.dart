@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 
-class CustomDialogWindow extends StatefulWidget {
-  const CustomDialogWindow(
-      {super.key, required this.child, required this.button});
+class MessageDialog extends StatefulWidget {
+  const MessageDialog({super.key, this.text});
 
-  final Widget child;
-  final List<Widget> button;
+  final String? text;
 
   @override
-  State<CustomDialogWindow> createState() => _CustomDialogWindowState();
+  State<MessageDialog> createState() => _MessageDialogState();
 }
 
-class _CustomDialogWindowState extends State<CustomDialogWindow> {
-  late List<Widget> button;
+class _MessageDialogState extends State<MessageDialog> {
+  String? text;
 
   @override
   void initState() {
     super.initState();
-    button = widget.button;
+
+    text = widget.text;
   }
 
   @override
@@ -28,13 +27,19 @@ class _CustomDialogWindowState extends State<CustomDialogWindow> {
         children: [
           Container(
             margin: const EdgeInsets.all(10),
-            child: widget.child,
+            child: Text(text ?? ''),
           ),
           Container(
             margin: const EdgeInsets.only(bottom: 10),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: [...button],
+              children: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text("Закрыть"))
+              ],
             ),
           ),
         ],
@@ -43,17 +48,14 @@ class _CustomDialogWindowState extends State<CustomDialogWindow> {
   }
 }
 
-Future<void> showCustomDialogWindow(
-    {required BuildContext context,
-    required Widget child,
-    required List<Widget> button}) async {
+Future<dynamic> showMessageDialogWindow(
+    BuildContext context, String text) async {
   return await showDialog(
     barrierDismissible: false,
     context: context,
     builder: (context) {
-      return CustomDialogWindow(
-        button: button,
-        child: child,
+      return MessageDialog(
+        text: text,
       );
     },
   );

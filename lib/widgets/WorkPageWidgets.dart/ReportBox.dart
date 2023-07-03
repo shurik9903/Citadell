@@ -11,7 +11,7 @@ class MReportBox extends StatefulWidget {
   const MReportBox({super.key, required this.value, required this.index});
 
   final bool value;
-  final String index;
+  final int index;
 
   @override
   State<MReportBox> createState() => _MReportBoxState();
@@ -19,7 +19,7 @@ class MReportBox extends StatefulWidget {
 
 class _MReportBoxState extends State<MReportBox> {
   late bool select;
-  late String index;
+  late int index;
 
   @override
   void initState() {
@@ -50,7 +50,8 @@ class _MReportBoxState extends State<MReportBox> {
               return;
             });
           } else {
-            await getReportFetch(fileName, index).then((value) async {
+            await getReportFetch(fileName, (index - 1).toString())
+                .then((value) async {
               await showReportDialogWindow(context, fileName, text, true,
                       report: value)
                   .then((value) {});
@@ -75,11 +76,13 @@ class _MReportBoxState extends State<MReportBox> {
       select = true;
     });
 
+    print(index - 1);
+
     context.read<OpenFiles>().saveReportData(jsonEncode({
           'data': [
             {
               'type': 'report',
-              'index': index,
+              'index': index - 1,
               'select': select.toString(),
               'message': message
             }
