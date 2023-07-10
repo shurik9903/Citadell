@@ -6,7 +6,8 @@ import 'package:flutter_univ/data/Option.dart';
 import '../data/UserData.dart';
 import 'package:http/http.dart' as http;
 
-Future<dynamic> fileAnalysisFetch(String fileName, String column) async {
+Future<dynamic> fileAnalysisFetch(
+    String fileName, int column, int select) async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
 
@@ -19,7 +20,11 @@ Future<dynamic> fileAnalysisFetch(String fileName, String column) async {
       "login": userData.login,
     },
     body: jsonEncode(
-      <String, String>{'name': fileName, 'column': column},
+      <String, String>{
+        'name': fileName,
+        'column': column.toString(),
+        'select': select.toString()
+      },
     ),
   );
 
