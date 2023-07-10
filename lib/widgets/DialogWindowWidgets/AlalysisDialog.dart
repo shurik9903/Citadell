@@ -75,19 +75,28 @@ class AnalysisDialogWindows extends StatefulWidget {
 class _AnalysisDialogWindowsState extends State<AnalysisDialogWindows> {
   late String fileName;
   late Map<int, String> columns;
-  late int dropDownIndex;
+  late int analysisIndex;
+  late int selectedRow;
 
   @override
   void initState() {
     super.initState();
     fileName = widget.fileName;
     columns = widget.columns;
-    dropDownIndex = columns.entries.first.key;
+    analysisIndex = columns.entries.first.key;
+    selectedRow = 1;
   }
 
-  void setDropDownValue(int value) {
+  void setAnalysisColumn(int value) {
     setState(() {
-      dropDownIndex = value;
+      analysisIndex = value;
+    });
+  }
+
+  void setSelectedRow(int value) {
+    setState(() {
+      print(value);
+      selectedRow = value;
     });
   }
 
@@ -119,9 +128,17 @@ class _AnalysisDialogWindowsState extends State<AnalysisDialogWindows> {
                           child: Text(fileName),
                         ),
                         ContainerStyle(
+                          text: 'Выделенные строки',
+                          child: DropdownColumnsExample(list: const {
+                            1: 'Все',
+                            2: 'Выделенные',
+                            3: 'Невыделенные'
+                          }, callback: setSelectedRow),
+                        ),
+                        ContainerStyle(
                           text: "Выберите анализируемый столбец",
                           child: DropdownColumnsExample(
-                              list: columns, callback: setDropDownValue),
+                              list: columns, callback: setAnalysisColumn),
                         ),
                       ],
                     ),
@@ -134,7 +151,13 @@ class _AnalysisDialogWindowsState extends State<AnalysisDialogWindows> {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context, ["analysis", dropDownIndex]);
+                    Navigator.pop(context, [
+                      "analysis",
+                      {
+                        'analysisIndex': analysisIndex,
+                        'selectedRow': selectedRow
+                      }
+                    ]);
                   },
                   child: const Text("Анализировать"),
                 ),

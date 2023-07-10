@@ -38,7 +38,8 @@ class _MAnalysisButtonState extends State<MAnalysisButton> {
             }
 
             if (value[0] == "analysis") {
-              await fileAnalysisFetch(fileName, value[1].toString())
+              await fileAnalysisFetch(fileName, value[1]['analysisIndex'],
+                      value[1]['selectedRow'])
                   .then((value) {
                 context
                     .read<OpenFiles>()
