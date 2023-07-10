@@ -49,7 +49,6 @@ class _MFileViewState extends State<MFileView> {
               child: Row(
                 children: [
                   Expanded(
-                    flex: 150,
                     child: Scrollbar(
                       controller: controller,
                       interactive: true,
@@ -66,9 +65,6 @@ class _MFileViewState extends State<MFileView> {
                         ],
                       ),
                     ),
-                  ),
-                  const Spacer(
-                    flex: 1,
                   ),
                   Container(
                     padding: const EdgeInsets.only(right: 10),

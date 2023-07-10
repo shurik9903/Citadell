@@ -34,7 +34,16 @@ class _MTableViewState extends State<MTableView> {
   }
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (context.watch<OpenFiles>().selectedFile != null) {
+      setOption();
+    }
+
     page.text = (((context.watch<OpenFiles>().selectedFile?.start ?? -1) + 1) /
             context.watch<OpenFiles>().numberRow)
         .ceil()
@@ -178,6 +187,13 @@ class _MTableViewState extends State<MTableView> {
         ],
       ),
     );
+  }
+
+  setOption() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TableOption>().setOption =
+          context.read<OpenFiles>().selectedFile!.tableOption;
+    });
   }
 
   void refreshDataLeft() {

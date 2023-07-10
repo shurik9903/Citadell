@@ -172,7 +172,7 @@ class TableOption extends ChangeNotifier {
   int _lengthStart = 0;
   int _lengthEnd = 0;
 
-  final Map<int, TypeRow> _typeRow = {
+  Map<int, TypeRow> _typeRow = {
     1: TypeRow(const Color.fromARGB(39, 255, 247, 0), "Власть"),
     2: TypeRow(const Color.fromARGB(33, 131, 255, 43), "Церковь"),
     3: TypeRow(const Color.fromARGB(40, 255, 72, 72), "Врачи/Медицина"),
@@ -181,6 +181,12 @@ class TableOption extends ChangeNotifier {
   };
 
   Map<int, TypeRow> get typeRow => _typeRow;
+
+  set typeRow(Map<int, TypeRow> typeRow) {
+    _typeRow = typeRow;
+
+    notifyListeners();
+  }
 
   Color get colorStart => _colorStart;
 
@@ -249,12 +255,29 @@ class TableOption extends ChangeNotifier {
     _fixEnd = fixEnd;
     notifyListeners();
   }
+
+  set setOption(TableOption tableOption) {
+    fixHeader = tableOption.fixHeader;
+    fixStart = tableOption.fixStart;
+    fixEnd = tableOption.fixEnd;
+
+    enableColorStart = tableOption.enableColorStart;
+    enableColorEnd = tableOption.enableColorEnd;
+
+    colorStart = tableOption.colorStart;
+    colorEnd = tableOption.colorEnd;
+
+    lengthStart = tableOption.lengthStart;
+    lengthEnd = tableOption.lengthEnd;
+
+    typeRow = tableOption.typeRow;
+  }
 }
 
 class OpenFiles extends ChangeNotifier {
   List<SelectFile> _openFiles = [];
   SelectFile? _selectedFile;
-  // TableOption? _tableOption;
+  TableOption _tableOption = TableOption();
   Map<int, String> _title = {};
   Map<int, String> _fileTitle = {};
   Map<int, List<dynamic>> _fileRow = {};
@@ -264,13 +287,6 @@ class OpenFiles extends ChangeNotifier {
   bool? _allSelect = false;
 
   int _numberRow = 25;
-
-  // TableOption? get tableOption => _tableOption;
-
-  // set tableOption(TableOption? tableOption) {
-  //   _tableOption = tableOption;
-  //   notifyListeners();
-  // }
 
   Map<int, int> get rowsType => _rowsType;
 
@@ -594,7 +610,7 @@ class _MyAppState extends State<MyApp> {
   final OpenFiles _openFile = OpenFiles();
   final TokenStatus _tokenStatus = TokenStatus();
   final WebSocketService _socket = WebSocketServiceFactory.createInstance();
-  // final TableOption _tableOption = TableOption();
+  final TableOption _tableOption = TableOption();
   EnumPage _enumPage = EnumPage.none;
 
   @override
@@ -621,15 +637,21 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(
           create: (context) => _connectStatus,
         ),
+        // ChangeNotifierProvider(
+        //   create: (context) => _openFile,
+        // ),
         ChangeNotifierProvider(
-          create: (context) => _openFile,
+          create: (context) => _tableOption,
         ),
+        ChangeNotifierProxyProvider<TableOption, OpenFiles>(
+            create: (context) => _openFile,
+            update: (context, tableOtion, openFile) {
+              openFile?.selectedFile?.tableOption.setOption = _tableOption;
+              return openFile!;
+            }),
         ChangeNotifierProvider(
           create: (context) => _tokenStatus,
         ),
-        // ChangeNotifierProvider(
-        //   create: (context) => _tableOption,
-        // ),
       ],
       builder: (context, child) {
         if (context.watch<TokenStatus>().tokenStatus == true) {
