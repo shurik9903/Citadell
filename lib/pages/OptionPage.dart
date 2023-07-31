@@ -1,9 +1,17 @@
+import 'dart:html';
+
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_univ/data/Option.dart';
 import 'package:flutter_univ/modules/ModelFetch.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/FileWidgets/ContainerStyle.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
+
+import '../modules/ConnectionFetch.dart';
+import '../widgets/WorkPageWidgets.dart/LoadAnimation.dart';
 
 class ModelData {
   late int id;
@@ -93,15 +101,15 @@ class _OptionMenuState extends State<OptionMenu> {
             child: const Text("Меню"),
           ),
           MenuButton(
-            text: "Настройки пользователя",
+            text: "Системные настройки",
             onTap: () {
-              context.read<SelectWindow>().openWindow = const UserSettings();
+              context.read<SelectWindow>().openWindow = const SystemSettings();
             },
           ),
           MenuButton(
-            text: "Настройки системы",
+            text: "Сервисные настройки",
             onTap: () {
-              context.read<SelectWindow>().openWindow = const SystemSettings();
+              context.read<SelectWindow>().openWindow = const ServiceOption();
             },
           ),
           MenuButton(
@@ -179,24 +187,6 @@ class _OptionWindowState extends State<OptionWindow> {
   }
 }
 
-class UserSettings extends StatefulWidget {
-  const UserSettings({super.key});
-
-  @override
-  State<UserSettings> createState() => _UserSettingsState();
-}
-
-class _UserSettingsState extends State<UserSettings> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: appTheme(context).tertiaryColor,
-    );
-  }
-}
-
 class SystemSettings extends StatefulWidget {
   const SystemSettings({super.key});
 
@@ -214,7 +204,268 @@ class _SystemSettingsState extends State<SystemSettings> {
       child: const SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: Column(
-            children: [ModelWorking()],
+            children: [
+              ServerOption(),
+            ],
+          )),
+    );
+  }
+}
+
+class ServerOption extends StatefulWidget {
+  const ServerOption({super.key});
+
+  @override
+  State<ServerOption> createState() => _ServerOptionState();
+}
+
+class _ServerOptionState extends State<ServerOption> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: appTheme(context).secondaryColor,
+      width: double.infinity,
+      child: const ContainerStyle(
+        bottom: true,
+        text: 'Настройки сервера',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ServerAddressOption(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ServerAddressOption extends StatefulWidget {
+  const ServerAddressOption({super.key});
+
+  @override
+  State<ServerAddressOption> createState() => _ServerAddressOptionState();
+}
+
+class _ServerAddressOptionState extends State<ServerAddressOption> {
+  final TextEditingController _ipController = TextEditingController();
+  final TextEditingController _portController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _apiController = TextEditingController();
+
+  bool _isPing = false;
+
+  bool _pingWait = false;
+
+  Color? _pingButtonColor;
+
+  textChange() {
+    setState(() {
+      _isPing = false;
+      _pingButtonColor = null;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    OptionBase optionBase = OptionSingleton();
+
+    _ipController.text = optionBase.serverIP;
+    _portController.text = optionBase.serverPort;
+    _nameController.text = optionBase.serverName;
+    _apiController.text = optionBase.serverAPI;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(color: appTheme(context).primaryColor),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Адрес сервера"),
+          Row(
+            children: [
+              Flexible(
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: 0.3,
+                  child: TextField(
+                    controller: _ipController,
+                    maxLines: 1,
+                    decoration: const InputDecoration(hintText: 'IP'),
+                    // onChanged: (value) => textChange(),
+                    inputFormatters: [
+                      MaskTextInputFormatter(
+                          mask: '###.###.###.###',
+                          filter: {'#': RegExp(r'[0-9]')},
+                          type: MaskAutoCompletionType.lazy)
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 5),
+                child: const Text(":"),
+              ),
+              Flexible(
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: 0.1,
+                  child: TextField(
+                    controller: _portController,
+                    maxLines: 1,
+                    decoration: const InputDecoration(hintText: 'PORT'),
+                    onChanged: (value) => textChange(),
+                    inputFormatters: [
+                      MaskTextInputFormatter(
+                          mask: '####',
+                          filter: {'#': RegExp(r'[0-9]')},
+                          type: MaskAutoCompletionType.lazy)
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 5),
+                child: const Text("/"),
+              ),
+              Flexible(
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: 0.15,
+                  child: TextField(
+                    controller: _nameController,
+                    maxLines: 1,
+                    decoration: const InputDecoration(hintText: 'NAME'),
+                    onChanged: (value) => textChange(),
+                    inputFormatters: [
+                      MaskTextInputFormatter(type: MaskAutoCompletionType.lazy)
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 5),
+                child: const Text("/"),
+              ),
+              Flexible(
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: 0.15,
+                  child: TextField(
+                    controller: _apiController,
+                    maxLines: 1,
+                    decoration: const InputDecoration(hintText: 'API'),
+                    onChanged: (value) => textChange(),
+                    inputFormatters: [
+                      MaskTextInputFormatter(type: MaskAutoCompletionType.lazy)
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Container(
+            margin: const EdgeInsets.only(top: 10),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () async {
+                    setState(() {
+                      _pingButtonColor = null;
+                      _isPing = false;
+                      _pingWait = true;
+                    });
+
+                    await connectionFetch(
+                            address:
+                                'http://${_ipController.text}:${_portController.text}/${_nameController.text}/${_apiController.text}/')
+                        .then((value) {
+                      setState(() {
+                        _pingButtonColor = Colors.green;
+                        _isPing = true;
+                      });
+                    }).catchError((error) {
+                      setState(() {
+                        _pingButtonColor = Colors.red;
+                        _isPing = false;
+                      });
+                    });
+
+                    setState(() {
+                      _pingWait = false;
+                    });
+                  },
+                  child: Container(
+                    alignment: Alignment.center,
+                    width: 50,
+                    height: 25,
+                    decoration: BoxDecoration(color: _pingButtonColor),
+                    child: _pingWait
+                        ? const LoadAnimation(
+                            radiusToCenter: 10,
+                            sizeDot: 4,
+                          )
+                        : Text(
+                            "PING",
+                            style: TextStyle(
+                              color: _pingButtonColor == null
+                                  ? null
+                                  : Colors.black,
+                            ),
+                          ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: _isPing
+                      ? () {
+                          setState(() {
+                            _pingButtonColor = null;
+                            _isPing = false;
+
+                            var option = OptionSingleton();
+
+                            option.serverIP = _ipController.text;
+                            option.serverPort = _portController.text;
+                            option.serverName = _nameController.text;
+                            option.serverAPI = _apiController.text;
+                          });
+                        }
+                      : null,
+                  child: const Text("Сохранить"),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class ServiceOption extends StatefulWidget {
+  const ServiceOption({super.key});
+
+  @override
+  State<ServiceOption> createState() => _ServiceOptionState();
+}
+
+class _ServiceOptionState extends State<ServiceOption> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: appTheme(context).tertiaryColor,
+      child: const SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: Column(
+            children: [
+              ModelWorking(),
+            ],
           )),
     );
   }
@@ -228,6 +479,50 @@ class ModelWorking extends StatefulWidget {
 }
 
 class _ModelWorkingState extends State<ModelWorking> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: appTheme(context).secondaryColor,
+      width: double.infinity,
+      child: const ContainerStyle(
+        bottom: true,
+        text: 'Модель',
+        child: Column(children: [ModelOption()]),
+        // Column(
+        //   crossAxisAlignment: CrossAxisAlignment.start,
+        //   children: [
+        //     const Text("Активная модель"),
+        //     FractionallySizedBox(
+        //       widthFactor: 0.2,
+        //       child: Container(
+        //         color: appTheme(context).primaryColor,
+        //         margin: const EdgeInsets.symmetric(vertical: 20),
+        //         padding:
+        //             const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+        //         child: ModelTile(
+        //           data: ModelData(1, "первый"),
+        //         ),
+        //       ),
+        //     ),
+        //     const Text("Доступные модели"),
+        //     ModelList(
+        //       data: _modelData,
+        //     ),
+        //   ],
+        // ),
+      ),
+    );
+  }
+}
+
+class ModelOption extends StatefulWidget {
+  const ModelOption({super.key});
+
+  @override
+  State<ModelOption> createState() => _ModelOptionState();
+}
+
+class _ModelOptionState extends State<ModelOption> {
   List<ModelData> _modelData = [];
   ModelData? _activeModel;
 
@@ -262,84 +557,58 @@ class _ModelWorkingState extends State<ModelWorking> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: appTheme(context).secondaryColor,
-      width: double.infinity,
-      child: ContainerStyle(
-        bottom: true,
-        text: 'Модель',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            FractionallySizedBox(
-              widthFactor: 0.2,
-              child: DropdownSearch<ModelData>(
-                popupProps: const PopupProps.menu(
-                  showSearchBox: true,
-                  showSelectedItems: true,
-                ),
-                filterFn: (item, filter) {
-                  return item.name.contains(filter) ||
-                      item.id.toString().contains(filter) ||
-                      '${item.id.toString()} ${item.name}'.contains(filter) ||
-                      filter.isEmpty;
-                },
-                compareFn: (item1, item2) =>
-                    item1.name == item2.name && item1.id == item2.id,
-                items: _modelData,
-                itemAsString: (item) => '${item.id} ${item.name}',
-                dropdownDecoratorProps: const DropDownDecoratorProps(
-                  dropdownSearchDecoration: InputDecoration(
-                    labelText: "Активная модель",
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _activeModel = value;
-                  });
-                },
-                selectedItem: _activeModel,
+      decoration: BoxDecoration(color: appTheme(context).primaryColor),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FractionallySizedBox(
+            widthFactor: 0.2,
+            child: DropdownSearch<ModelData>(
+              popupProps: const PopupProps.menu(
+                showSearchBox: true,
+                showSelectedItems: true,
               ),
+              filterFn: (item, filter) {
+                return item.name.contains(filter) ||
+                    item.id.toString().contains(filter) ||
+                    '${item.id.toString()} ${item.name}'.contains(filter) ||
+                    filter.isEmpty;
+              },
+              compareFn: (item1, item2) =>
+                  item1.name == item2.name && item1.id == item2.id,
+              items: _modelData,
+              itemAsString: (item) => '${item.id} ${item.name}',
+              dropdownDecoratorProps: const DropDownDecoratorProps(
+                dropdownSearchDecoration: InputDecoration(
+                  labelText: "Активная модель",
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _activeModel = value;
+                });
+              },
+              selectedItem: _activeModel,
             ),
-            Row(
-              children: [
-                TextButton(
-                  onPressed: () {},
-                  child: const Text("Выбрать"),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text("Переименовать"),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text("Удалить"),
-                ),
-              ],
-            )
-          ],
-        ),
-        // Column(
-        //   crossAxisAlignment: CrossAxisAlignment.start,
-        //   children: [
-        //     const Text("Активная модель"),
-        //     FractionallySizedBox(
-        //       widthFactor: 0.2,
-        //       child: Container(
-        //         color: appTheme(context).primaryColor,
-        //         margin: const EdgeInsets.symmetric(vertical: 20),
-        //         padding:
-        //             const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-        //         child: ModelTile(
-        //           data: ModelData(1, "первый"),
-        //         ),
-        //       ),
-        //     ),
-        //     const Text("Доступные модели"),
-        //     ModelList(
-        //       data: _modelData,
-        //     ),
-        //   ],
-        // ),
+          ),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () {},
+                child: const Text("Выбрать"),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: const Text("Переименовать"),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: const Text("Удалить"),
+              ),
+            ],
+          )
+        ],
       ),
     );
   }
