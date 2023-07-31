@@ -18,7 +18,7 @@ abstract class OptionBase {
   set serverName(String serverName) =>
       storage.setItem('serverName', serverName);
 
-  String get serverName => storage.getItem('serverName') ?? 'FSB';
+  String get serverName => storage.getItem('serverName') ?? 'Citadel';
 
   set serverPort(String serverPort) =>
       storage.setItem('serverPort', serverPort);

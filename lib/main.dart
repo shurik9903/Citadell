@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/data/UserData.dart';
+import 'package:flutter_univ/modules/ConnectionFetch.dart';
 import 'package:flutter_univ/modules/FileFetch.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/CustomDialog.dart';
@@ -277,7 +278,7 @@ class TableOption extends ChangeNotifier {
 class OpenFiles extends ChangeNotifier {
   List<SelectFile> _openFiles = [];
   SelectFile? _selectedFile;
-  TableOption _tableOption = TableOption();
+  // TableOption _tableOption = TableOption();
   Map<int, String> _title = {};
   Map<int, String> _fileTitle = {};
   Map<int, List<dynamic>> _fileRow = {};
@@ -808,15 +809,27 @@ class _DrawerMenuState extends State<DrawerMenu> {
           },
         ),
         ListTile(
-          title: const Text("Выход"),
-          onTap: () {
-            Navigator.pushNamed(context, '/login');
-          },
-        ),
-        ListTile(
           title: const Text("Закрыть"),
           onTap: () {
             Navigator.pop(context);
+          },
+        ),
+        ListTile(
+          title: const Text("Проверка сетевого соединения"),
+          onTap: () {
+            connectionFetch().then((value) {
+              showMessageDialogWindow(
+                  context, 'Сетевое соединение присутствует');
+            }).catchError((error) {
+              showMessageDialogWindow(
+                  context, 'Сетевое соединение отсутствует');
+            });
+          },
+        ),
+        ListTile(
+          title: const Text("Выход"),
+          onTap: () {
+            Navigator.pushNamed(context, '/login');
           },
         ),
       ],

@@ -43,7 +43,7 @@ class _MSidebarState extends State<MSidebar> {
             flex: 10,
             child: MAnalysisButton(),
           ),
-          Spacer(
+          const Spacer(
             flex: 3,
           )
         ],

@@ -8,47 +8,40 @@ import '../data/Option.dart';
 import '../data/UserData.dart';
 import 'package:http/http.dart' as http;
 
-Future<dynamic> connectionFetch() async {
-  var userData = UserDataSingleton();
-  var option = OptionSingleton();
-
-  var response = await http.get(Uri.parse('${option.url}ping'), headers: {
-    "Content-type": "application/json",
-    "Accept": "application/json"
-  });
-
-  if (response.statusCode == 200) {
-    var data = response.body;
-
-    return '';
+Future<dynamic> connectionFetch({String? address}) async {
+  if (address == null) {
+    var option = OptionSingleton();
+    address = option.url;
   }
-  if (response.statusCode == 401) {
+
+  try {
+    var response = await http.get(Uri.parse('${address}ping'), headers: {
+      "Content-type": "application/json",
+      "Accept": "application/json"
+    }).timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      return '';
+    }
+
     throw Exception(response.statusCode);
+  } catch (error) {
+    throw Exception(error);
   }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
 }
 
 Future<dynamic> callConnection(Function(bool connect) callback) async {
-  connectionFetch().then((value) {
-    callback(true);
-  }).catchError((error) {
-    callback(false);
-  });
+  do {
+    connectionFetch().then((value) {
+      callback(true);
+    }).catchError((error) {
+      callback(false);
+    });
 
-  while (true) {
     await Future.delayed(
-      const Duration(seconds: 5),
-      () {
-        connectionFetch().then((value) {
-          callback(true);
-        }).catchError((error) {
-          callback(false);
-        });
-      },
+      const Duration(seconds: 60),
     );
-  }
+  } while (true);
 }
 
 Future<dynamic> subscribeDataConnection(

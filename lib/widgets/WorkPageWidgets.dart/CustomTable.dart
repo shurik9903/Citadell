@@ -153,7 +153,7 @@ class _CustomTableState extends State<CustomTable> {
       if (_titleData.length >= _lengthHeader &&
           _lengthHeader >= _lengthHeader) {
         _helperTableColumnsList = _titleData.entries
-            .map((e) => TableColumns(title: e.value, width: 100))
+            .map((e) => TableColumns(title: e.value, width: 200))
             .toList();
 
         List<DataColumn> columns =
@@ -260,7 +260,9 @@ class _CustomTableState extends State<CustomTable> {
               );
             }
 
-            return Text(value.toString());
+            return SingleChildScrollView(
+              child: Text(value.toString()),
+            );
           }();
 
           return DataCell(Container(
