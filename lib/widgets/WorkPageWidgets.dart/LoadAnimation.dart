@@ -3,7 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class LoadAnimation extends StatefulWidget {
-  const LoadAnimation({super.key});
+  const LoadAnimation(
+      {super.key, this.radiusToCenter, this.numberDot, this.sizeDot});
+
+  final double? radiusToCenter;
+  final int? numberDot;
+  final double? sizeDot;
 
   @override
   State<LoadAnimation> createState() => _LoadAnimationState();
@@ -17,8 +22,9 @@ class _LoadAnimationState extends State<LoadAnimation>
   late Animation<double> aRadiusIn;
   late Animation<double> aRadiusOut;
 
-  final int numberDot = 10;
-  final double radiusToCenter = 15;
+  late final int numberDot;
+  late final double radiusToCenter;
+  late final double sizeDot;
 
   double currentRadius = 0;
 
@@ -27,6 +33,10 @@ class _LoadAnimationState extends State<LoadAnimation>
   @override
   void initState() {
     super.initState();
+
+    numberDot = widget.numberDot ?? 10;
+    radiusToCenter = widget.radiusToCenter ?? 15;
+    sizeDot = widget.sizeDot ?? 5;
 
     controller =
         AnimationController(vsync: this, duration: const Duration(seconds: 5));
@@ -98,7 +108,8 @@ class _LoadAnimationState extends State<LoadAnimation>
       return Transform.translate(
         offset: Offset(currentRadius * cos(number * pi / (numberDot / 2)),
             currentRadius * sin(number * pi / (numberDot / 2))),
-        child: const Dot(radius: 5, color: Color.fromARGB(255, 255, 255, 255)),
+        child: Dot(
+            radius: sizeDot, color: const Color.fromARGB(255, 255, 255, 255)),
       );
     }).toList();
   }
