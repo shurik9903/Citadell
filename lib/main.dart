@@ -4,12 +4,14 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/data/Option.dart';
 import 'package:flutter_univ/data/UserData.dart';
 import 'package:flutter_univ/modules/ConnectionFetch.dart';
 import 'package:flutter_univ/modules/FileFetch.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/CustomDialog.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/MessageDialog.dart';
+import 'package:flutter_univ/widgets/DialogWindowWidgets/OkCancelDialog.dart';
 import 'package:flutter_univ/widgets/WorkPageWidgets.dart/FileContainer.dart';
 
 import 'package:provider/provider.dart';
@@ -22,18 +24,21 @@ import 'theme/ThemeFactory.dart';
 class WebSocketService extends ChangeNotifier {
   WebSocketChannel? connection;
 
-  final API_URL = "ws://localhost:8080/FSB/WSConnect";
-
   Future<void> close() async {
     connection?.sink.close(1000, 'Exit');
   }
 
   Future<bool> open() async {
+    OptionSingleton option = OptionSingleton();
+
+    final webSocketUrl =
+        "ws://${option.serverIP}:${option.serverPort}/${option.serverName}/WSConnect";
+
     try {
       var userData = UserDataSingleton();
 
-      connection =
-          WebSocketChannel.connect(Uri.parse("$API_URL/${userData.login}"));
+      connection = WebSocketChannel.connect(
+          Uri.parse("$webSocketUrl/${userData.login}"));
 
       return true;
     } catch (e) {
@@ -661,7 +666,7 @@ class _MyAppState extends State<MyApp> {
 
         return MaterialApp(
           initialRoute: '/login',
-          title: 'FSB',
+          title: 'Citadell',
           theme: themeFactory.themeCreator(context.watch<SelectTheme>().theme),
           onGenerateRoute: (settings) {
             var userData = UserDataSingleton();
@@ -758,42 +763,27 @@ class _DrawerMenuState extends State<DrawerMenu> {
         ListTile(
           title: const Text("Загрузить данные"),
           onTap: () async {
-            await getAllUserFileFetch().then((value) {
-              showCustomDialogWindow(
-                  context: context,
-                  child: SizedBox(
-                    width: 500,
-                    child: Column(
-                      children: [
-                        ...(value as List<FileData>).map<Widget>((value) {
-                          return SelectFileContainer(
-                              name: value.name ?? ' ', fileID: value.id ?? -1);
-                        }).toList(),
-                      ],
-                    ),
+            // await getAllUserFileFetch().then((value) {
+
+            showCustomDialogWindow(
+                context: context,
+                child: const FilesContainer(),
+                button: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context, "cancel");
+                    },
+                    child: const Text("Закрыть"),
                   ),
-                  button: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context, "cancel");
-                      },
-                      child: const Text("Закрыть"),
-                    ),
-                  ]).then((value) async {
-                if (value as String == "cancel") {
-                  return;
-                }
-              }).catchError((error) {
+                ]).then((value) async {
+              if (value as String == "cancel") {
                 return;
-              });
+              }
             }).catchError((error) {
               print(error);
+              return;
             });
           },
-        ),
-        ListTile(
-          title: const Text("Доп. Информация"),
-          onTap: () {},
         ),
         ListTile(
           title: const Text("Настройки"),
@@ -827,6 +817,29 @@ class _DrawerMenuState extends State<DrawerMenu> {
           },
         ),
         ListTile(
+          title: const Text("О программе"),
+          onTap: () {
+            showCustomDialogWindow(
+                context: context,
+                child: const InfoProgram(),
+                button: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context, "cancel");
+                    },
+                    child: const Text("Закрыть"),
+                  ),
+                ]).then((value) async {
+              if (value as String == "cancel") {
+                return;
+              }
+            }).catchError((error) {
+              print(error);
+              return;
+            });
+          },
+        ),
+        ListTile(
           title: const Text("Выход"),
           onTap: () {
             Navigator.pushNamed(context, '/login');
@@ -837,12 +850,95 @@ class _DrawerMenuState extends State<DrawerMenu> {
   }
 }
 
+class InfoProgram extends StatelessWidget {
+  const InfoProgram({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 500,
+      height: 250,
+      child: Container(
+        margin: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(10),
+        color: appTheme(context).primaryColor,
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Web-приложение для классификации комментариев пользователей, а также выявление экстремистских высказываний посредством анализа сообщений машинным обучением",
+            ),
+            Text(
+              "\n\n Автор:  \n Кривоносова София \n Сулима Роман \n Бовт Александр",
+            ),
+            Spacer(),
+            Text(
+              "Регистрационный номер: 2023665649",
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class FilesContainer extends StatefulWidget {
+  const FilesContainer({super.key});
+
+  @override
+  State<FilesContainer> createState() => _FilesContainerState();
+}
+
+class _FilesContainerState extends State<FilesContainer> {
+  List<FileData> files = [];
+
+  @override
+  void initState() {
+    super.initState();
+    update();
+  }
+
+  void update() {
+    getAllUserFileFetch().then((value) {
+      setState(() {
+        files = value;
+      });
+    }).catchError((error) {
+      files = [];
+      print(error);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 500,
+      child: Column(
+        children: [
+          ...(files).map<Widget>((value) {
+            return SelectFileContainer(
+              name: value.name ?? ' ',
+              fileID: value.id ?? -1,
+              deleteFile: update,
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+}
+
 class SelectFileContainer extends StatefulWidget {
-  const SelectFileContainer(
-      {super.key, required this.name, required this.fileID});
+  const SelectFileContainer({
+    super.key,
+    required this.name,
+    required this.fileID,
+    required this.deleteFile,
+  });
 
   final String name;
   final int fileID;
+  final Function deleteFile;
 
   @override
   State<SelectFileContainer> createState() => _SelectFileContainerState();
@@ -881,6 +977,28 @@ class _SelectFileContainerState extends State<SelectFileContainer> {
         child: Row(
           children: [
             Text(name),
+            const Spacer(),
+            IconButton(
+                onPressed: () {
+                  showOkCancelDialogWindow(context,
+                          'Вы уверены, что хотите удалить данный файл?')
+                      .then((value) {
+                    if (value) {
+                      deleteFileFetch(name).then((value) {
+                        widget.deleteFile();
+                        showMessageDialogWindow(
+                            context, "Файл успешно удален!");
+                      }).catchError((e) {
+                        showMessageDialogWindow(
+                            context, "Не удалось удалить файл!\nОшибка: $e");
+                      });
+                    }
+                  });
+                },
+                icon: const Icon(
+                  Icons.delete,
+                  color: Colors.red,
+                ))
           ],
         ),
       ),
