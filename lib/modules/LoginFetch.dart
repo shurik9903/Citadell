@@ -21,14 +21,10 @@ Future<dynamic> loginFetch(String login, String password) async {
 
     final loginData = LoginData.fromJson(jsonDecode(data));
 
-    if (loginData.msg != null) throw Exception(loginData.msg);
-
     var userData = UserDataSingleton();
 
     userData.login = loginData.login ?? '';
     userData.token = loginData.token ?? '';
-
-    print(loginData.msg);
 
     return '';
   }

@@ -17,14 +17,6 @@ Future<dynamic> getFileFetch(String fileName) async {
   });
 
   if (response.statusCode == 200) {
-    var data = response.body;
-    var msg = jsonDecode(data)["Msg"];
-
-    if (msg != '') {
-      print("msg $msg");
-      throw Exception(msg);
-    }
-
     return '';
   }
 
@@ -52,14 +44,7 @@ Future<dynamic> saveFileFetch(String fileData) async {
 
   if (response.statusCode == 200) {
     var data = response.body;
-    var msg = jsonDecode(data)["Msg"];
     var replace = jsonDecode(data)["Replace"];
-
-    if (msg != '') {
-      print(msg);
-      throw Exception(msg);
-    }
-
     return replace;
   }
   if (response.statusCode == 401) {
@@ -83,13 +68,6 @@ Future<dynamic> getAllUserFileFetch() async {
 
   if (response.statusCode == 200) {
     var data = response.body;
-    var msg = jsonDecode(data)["Msg"];
-
-    if (msg != null && msg != '') {
-      print(msg);
-      throw Exception(msg);
-    }
-
     final docData = jsonDecode(data)["Files"];
 
     List<FileData>? files = jsonDecode(docData)
@@ -122,13 +100,6 @@ Future<dynamic> getDocFetch(String name,
 
   if (response.statusCode == 200) {
     var data = response.body;
-    var msg = jsonDecode(data)["Msg"];
-
-    if (msg != '') {
-      print(msg);
-      throw Exception(msg);
-    }
-
     final docData = DocData.fromJson(jsonDecode(data));
     return docData;
   }
@@ -154,16 +125,9 @@ Future<dynamic> rewriteFileFetch(String docName) async {
   });
 
   if (response.statusCode == 200) {
-    var data = response.body;
-    var msg = jsonDecode(data)["Msg"];
-
-    if (msg != '') {
-      print(msg);
-      throw Exception(msg);
-    }
-
     return "";
   }
+
   if (response.statusCode == 401) {
     throw Exception(response.statusCode);
   }
@@ -186,16 +150,32 @@ Future<dynamic> updateDocFetch(String docName, String docData) async {
       body: docData);
 
   if (response.statusCode == 200) {
-    var data = response.body;
-    var msg = jsonDecode(data)["Msg"];
-
-    if (msg != '') {
-      print(msg);
-      throw Exception(msg);
-    }
-
     return "";
   }
+
+  if (response.statusCode == 401) {
+    throw Exception(response.statusCode);
+  }
+
+  print(response.statusCode);
+  throw Exception(response.statusCode);
+}
+
+Future<dynamic> deleteFileFetch(String fileName) async {
+  var userData = UserDataSingleton();
+  var option = OptionSingleton();
+  var response = await http
+      .delete(Uri.parse('${option.url}file?name=$fileName'), headers: {
+    "Content-type": "application/json",
+    "Accept": "application/json",
+    "token": userData.token,
+    "login": userData.login,
+  });
+
+  if (response.statusCode == 200) {
+    return '';
+  }
+
   if (response.statusCode == 401) {
     throw Exception(response.statusCode);
   }

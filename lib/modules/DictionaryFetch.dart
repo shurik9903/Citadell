@@ -15,8 +15,6 @@ Future<dynamic> dictionaryFetch(String word) async {
   });
 
   if (response.statusCode == 200) {
-    var data = response.body;
-
     return '';
   }
   if (response.statusCode == 401) {

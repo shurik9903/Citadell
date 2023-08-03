@@ -17,13 +17,6 @@ Future<dynamic> getReportFetch(String name, String row) async {
 
   if (response.statusCode == 200) {
     var data = response.body;
-    var msg = jsonDecode(data)["Msg"];
-
-    if (msg != '') {
-      print(msg);
-      throw Exception(msg);
-    }
-
     final report = jsonDecode(data)["report"];
     return report;
   }

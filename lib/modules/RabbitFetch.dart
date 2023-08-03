@@ -14,11 +14,6 @@ Future<dynamic> rabbitFetch() async {
   });
 
   if (response.statusCode == 200) {
-    var data = response.body;
-
-    print(data);
-
-    // return "ok";
     return '';
   }
   if (response.statusCode == 401) {

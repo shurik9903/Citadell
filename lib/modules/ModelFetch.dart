@@ -14,9 +14,7 @@ Future<dynamic> getModelsFetch() async {
   });
 
   if (response.statusCode == 200) {
-    var data = response.body;
-
-    return data;
+    return response.body;
   }
   if (response.statusCode == 401) {
     throw Exception(response.statusCode);
