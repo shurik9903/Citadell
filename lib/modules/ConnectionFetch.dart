@@ -1,36 +1,29 @@
 import 'dart:convert';
-import 'dart:js';
-
 import 'package:flutter_univ/main.dart';
 import 'package:flutter_univ/modules/AnalysisFetch.dart';
-
+import 'package:flutter_univ/modules/TeachingFetch.dart';
 import '../data/Option.dart';
-import '../data/UserData.dart';
 import 'package:http/http.dart' as http;
 
-Future<dynamic> connectionFetch({String? address}) async {
+Future<void> connectionFetch({String? address}) async {
   if (address == null) {
     var option = OptionSingleton();
     address = option.url;
   }
 
-  try {
-    var response = await http.get(Uri.parse('${address}ping'), headers: {
-      "Content-type": "application/json",
-      "Accept": "application/json"
-    }).timeout(const Duration(seconds: 10));
+  var response = await http.get(Uri.parse('${address}ping'), headers: {
+    "Content-type": "application/json",
+    "Accept": "application/json"
+  }).timeout(const Duration(seconds: 10));
 
-    if (response.statusCode == 200) {
-      return '';
-    }
-
-    throw Exception(response.statusCode);
-  } catch (error) {
-    throw Exception(error);
+  if (response.statusCode == 200) {
+    return;
   }
+
+  throw Exception(response.body);
 }
 
-Future<dynamic> callConnection(Function(bool connect) callback) async {
+Future<void> callConnection(Function(bool connect) callback) async {
   do {
     connectionFetch().then((value) {
       callback(true);
@@ -44,7 +37,7 @@ Future<dynamic> callConnection(Function(bool connect) callback) async {
   } while (true);
 }
 
-Future<dynamic> subscribeDataConnection(
+Future<void> subscribeDataConnection(
     Stream<dynamic>? connection, Function callback) async {
   connection?.listen((value) async {
     Map<String, dynamic> data = jsonDecode(value) as Map<String, dynamic>;
@@ -58,7 +51,7 @@ Future<dynamic> subscribeDataConnection(
           print('Message: ${message}');
         }
         break;
-      case 'FileResult':
+      case 'FilePredictResult':
         {
           var data = jsonDecode(message);
 
@@ -66,6 +59,17 @@ Future<dynamic> subscribeDataConnection(
           String uuid = data["uuid"].toString();
 
           await getAnalysisFetch(uuid);
+          callback(fileName, FileStatus.ready);
+        }
+        break;
+      case 'FileTeachResult':
+        {
+          var data = jsonDecode(message);
+
+          String fileName = data["fileName"].toString();
+          String uuid = data["uuid"].toString();
+
+          await getTeachingFetch(uuid);
           callback(fileName, FileStatus.ready);
         }
         break;
