@@ -45,16 +45,16 @@ class _AllSelectState extends State<AllSelect> {
 }
 
 class TableColumn extends StatefulWidget {
-  TableColumn({
+  const TableColumn({
     super.key,
     required this.index,
     required this.length,
     required this.child,
   });
 
-  int index;
-  int length;
-  Widget child;
+  final int index;
+  final int length;
+  final Widget child;
 
   @override
   State<TableColumn> createState() => _TableColumnState();

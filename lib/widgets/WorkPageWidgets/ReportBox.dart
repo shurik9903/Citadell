@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/main.dart';
 import 'package:flutter_univ/modules/ReportFetch.dart';
-import 'package:flutter_univ/pages/WorkPage.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/ReportDialog.dart';
 import 'package:provider/provider.dart';
 
@@ -76,9 +75,7 @@ class _MReportBoxState extends State<MReportBox> {
       select = true;
     });
 
-    print(index - 1);
-
-    context.read<OpenFiles>().saveReportData(jsonEncode({
+    context.read<OpenFiles>().saveRowData(jsonEncode({
           'data': [
             {
               'type': 'report',

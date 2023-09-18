@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/main.dart';
-import 'package:flutter_univ/widgets/WorkPageWidgets.dart/CustomTable.dart';
-import 'package:flutter_univ/widgets/WorkPageWidgets.dart/TableLegend.dart';
-import 'package:flutter_univ/widgets/WorkPageWidgets.dart/TableSettings.dart';
+import 'package:flutter_univ/widgets/WorkPageWidgets/CustomTable.dart';
+import 'package:flutter_univ/widgets/WorkPageWidgets/TableLegend.dart';
+import 'package:flutter_univ/widgets/WorkPageWidgets/TableSettings.dart';
 import 'package:provider/provider.dart';
 
 import '../../theme/AppThemeDefault.dart';

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/widgets/OptionPageWidgets/ServiceWidgets/DictionarySidebar.dart';
+import 'package:flutter_univ/widgets/OptionPageWidgets/ServiceWidgets/DictionaryWordView.dart';
+import 'package:flutter_univ/widgets/OptionPageWidgets/ServiceWidgets/DictionaryWorking.dart';
 import 'package:provider/provider.dart';
-
-import '../../pages/WorkPage.dart';
 import '../../theme/AppThemeDefault.dart';
 
 class MDictionary extends StatefulWidget {
@@ -29,12 +30,12 @@ class _MDictionaryState extends State<MDictionary> {
           ),
         ),
         child: FractionallySizedBox(
-          heightFactor: 0.96,
-          widthFactor: 0.91,
+          heightFactor: 0.98,
+          widthFactor: 0.97,
           child: Container(
             decoration: BoxDecoration(
                 border: Border.all(
-                    color: appTheme(context).primaryColor, width: 10)),
+                    color: appTheme(context).primaryColor, width: 5)),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -52,23 +53,23 @@ class _MDictionaryState extends State<MDictionary> {
                     ),
                     child: const Text(
                       "Словарь",
-                      style: TextStyle(fontSize: 40),
+                      style: TextStyle(fontSize: 30),
                     ),
                   ),
                 ),
                 Expanded(
-                  flex: 9,
+                  flex: 12,
                   child: Container(
-                    padding: const EdgeInsets.all(20),
-                    height: double.infinity,
-                    width: double.infinity,
-                    alignment: Alignment.topLeft,
-                    child: RichText(
-                      text: TextSpan(
-                        children: context.watch<DictioneryText>().dictText,
-                      ),
-                    ),
-                  ),
+                      padding: const EdgeInsets.only(bottom: 10),
+                      height: double.infinity,
+                      width: double.infinity,
+                      child:
+                          context.watch<DictionaryOption>().selectWord != null
+                              ? const DictionaryWordView(
+                                  sidebar: true,
+                                )
+                              : const DictionarySidebar()),
+                  // ),
                 )
               ],
             ),

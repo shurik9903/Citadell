@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_univ/main.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/ColorPickerDialog.dart';
-import 'package:flutter_univ/widgets/WorkPageWidgets.dart/CustomNumberInput.dart';
+import 'package:flutter_univ/widgets/WorkPageWidgets/CustomNumberInput.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 

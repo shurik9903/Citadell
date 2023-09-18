@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_univ/main.dart';
 import 'package:provider/provider.dart';
 
-import '../../pages/WorkPage.dart';
-
 class MUpdateBox extends StatefulWidget {
   const MUpdateBox({super.key, required this.value, required this.index});
 
@@ -38,7 +36,7 @@ class _MUpdateBoxState extends State<MUpdateBox> {
           context.read<OpenFiles>().selectedRow[index] = value!;
         });
 
-        context.read<OpenFiles>().saveReportData(jsonEncode({
+        context.read<OpenFiles>().saveRowData(jsonEncode({
               'data': [
                 {
                   'type': 'update',

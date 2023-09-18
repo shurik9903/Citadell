@@ -28,16 +28,16 @@ class _MSidebarState extends State<MSidebar> {
       child: Column(
         children: [
           Expanded(
-            flex: 20,
+            flex: 10,
             child: context.watch<TypeViewMenu>().show
-                ? const MMenuButton()
-                : const MUserPanel(),
+                ? const MUserPanel()
+                : const MMenuButton(),
           ),
           Expanded(
             flex: 110,
             child: context.watch<TypeViewMenu>().show
-                ? const SizedBox()
-                : const MDictionary(),
+                ? const MDictionary()
+                : const SizedBox(),
           ),
           const Expanded(
             flex: 10,

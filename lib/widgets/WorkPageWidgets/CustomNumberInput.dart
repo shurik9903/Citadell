@@ -66,7 +66,6 @@ class _CustomNumberInputState extends State<CustomNumberInput> {
     _max = widget.maxValue ?? 9999999;
 
     if (_controller.text != ramp(int.parse(_controller.text)).toString()) {
-      print('test');
       setValue(int.parse(_controller.text));
     }
 

@@ -1,17 +1,25 @@
+import 'dart:convert';
+
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_univ/data/FileData.dart';
 import 'package:flutter_univ/main.dart';
+import 'package:flutter_univ/pages/WorkPage.dart';
 import 'package:flutter_univ/theme/AppThemeDefault.dart';
-import 'package:flutter_univ/widgets/WorkPageWidgets.dart/ReportBox.dart';
-import 'package:flutter_univ/widgets/WorkPageWidgets.dart/TableColumn.dart';
-import 'package:flutter_univ/widgets/WorkPageWidgets.dart/UpdateBox.dart';
+import 'package:flutter_univ/widgets/OptionPageWidgets/ServiceWidgets/DictionaryWorking.dart';
+import 'package:flutter_univ/widgets/WorkPageWidgets/ReportBox.dart';
+import 'package:flutter_univ/widgets/WorkPageWidgets/TableColumn.dart';
+import 'package:flutter_univ/widgets/WorkPageWidgets/TypeBox.dart';
+import 'package:flutter_univ/widgets/WorkPageWidgets/UpdateBox.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 import 'package:provider/provider.dart';
 
 class TableColumns {
   String? title;
+  String? type;
   double? width;
 
-  TableColumns({this.width, this.title});
+  TableColumns({this.width, this.title, this.type});
 }
 
 class CustomTable extends StatefulWidget {
@@ -30,9 +38,8 @@ class _CustomTableState extends State<CustomTable> {
   ScrollController? _headerScrollController;
   ScrollController? _dataScrollController;
 
-  Map<int, String> _titleData = {};
+  Map<int, Map<String, String>> _titleData = {};
   Map<int, List<dynamic>> _rowsData = {};
-  Map<int, int> _rowsType = {};
 
   List<DataColumn> _columnsMid = [];
   List<DataColumn> _columnsStart = [];
@@ -74,15 +81,18 @@ class _CustomTableState extends State<CustomTable> {
     lengthEnd = context.watch<TableOption>().lengthEnd;
     lengthStart = context.watch<TableOption>().lengthStart;
 
-    titleData = context.watch<OpenFiles>().fileTitle;
+    setTitleData(context.watch<OpenFiles>().fileTitle,
+        context.watch<OpenFiles>().titleTypes);
+
     rowsData = context.watch<OpenFiles>().fileRow;
-    rowsType = context.watch<OpenFiles>().rowsType;
 
     enableColorStart = context.watch<TableOption>().enableColorStart;
     enableColorEnd = context.watch<TableOption>().enableColorEnd;
 
     colorStart = context.watch<TableOption>().colorStart;
     colorEnd = context.watch<TableOption>().colorEnd;
+
+    fullBuild();
 
     List<Widget> children = [];
     children.add(SingleChildScrollView(
@@ -153,13 +163,14 @@ class _CustomTableState extends State<CustomTable> {
       if (_titleData.length >= _lengthHeader &&
           _lengthHeader >= _lengthHeader) {
         _helperTableColumnsList = _titleData.entries
-            .map((e) => TableColumns(title: e.value, width: 200))
+            .map((e) => TableColumns(
+                title: e.value['title'], width: 200, type: e.value['type']))
             .toList();
 
         List<DataColumn> columns =
             _helperTableColumnsList.asMap().entries.map((e) {
           Widget child;
-          if (e.value.title == 'Обновить') {
+          if (e.value.type == 'update') {
             child = const AllSelect(value: false);
           } else {
             child = Text(
@@ -215,17 +226,35 @@ class _CustomTableState extends State<CustomTable> {
     setState(() {
       int maxRows = maxRowsLength();
 
+      Color colorPercent(int? percent) {
+        return percent != null
+            ? percent <= 30
+                ? const Color.fromARGB(255, 255, 0, 0)
+                : percent <= 60
+                    ? const Color.fromARGB(255, 255, 217, 0)
+                    : const Color.fromARGB(255, 30, 255, 0)
+            : const Color.fromARGB(255, 255, 255, 255);
+      }
+
       if (_titleData.length >= _lengthHeader &&
           maxRows >= _lengthHeader &&
           maxRows <= _titleData.length &&
           _helperTableColumnsList.length >= maxRows) {
-        createCell(int columnIndex, int rowIndex, var value) {
+        createCell(int columnIndex, int rowIndex, String value) {
           Widget? child;
-          String title = _helperTableColumnsList[columnIndex].title ?? '';
-          int size = _helperTableColumnsList.length;
+          TableColumns title = _helperTableColumnsList[columnIndex];
 
           child = () {
-            if (title == "Обновить" && columnIndex == size - 2) {
+            if (title.type == "type") {
+              return MTypeBox(
+                value: int.tryParse(value) ?? 0,
+                index: rowIndex,
+                typeRow: context.read<TableOption>().typeRow,
+                key: Key(rowIndex.toString()),
+              );
+            }
+
+            if (title.type == "update") {
               return MUpdateBox(
                 value: value == "true",
                 index: rowIndex,
@@ -233,7 +262,7 @@ class _CustomTableState extends State<CustomTable> {
               );
             }
 
-            if (title == "Отчет" && columnIndex == size - 1) {
+            if (title.type == "report") {
               return MReportBox(
                 value: value == "true",
                 index: rowIndex,
@@ -241,27 +270,103 @@ class _CustomTableState extends State<CustomTable> {
               );
             }
 
-            if (title == "Вероятность" && columnIndex == size - 3) {
+            if (title.type == "probability") {
               return Container(
                 alignment: Alignment.center,
                 child: Text(
-                  value.toString(),
+                  value,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: int.tryParse(value.toString()) != null
-                        ? int.parse(value.toString()) <= 30
-                            ? const Color.fromARGB(255, 255, 0, 0)
-                            : int.parse(value.toString()) <= 60
-                                ? const Color.fromARGB(255, 255, 217, 0)
-                                : const Color.fromARGB(255, 30, 255, 0)
-                        : const Color.fromARGB(255, 255, 255, 255),
+                    color: colorPercent(int.tryParse(value)),
                   ),
                 ),
               );
             }
 
+            if (title.type == "analysis" && value.isNotEmpty) {
+              List<AnalysisWord> words = jsonDecode(value)
+                  .map<AnalysisWord>((value) => AnalysisWord.fromJson(value))
+                  .toList();
+
+              List<String> text = [];
+              List<InlineSpan> spanText = [];
+
+              for (var element in words) {
+                if (element.isWord == true && element.id != null) {
+                  if (text.isNotEmpty) {
+                    spanText.add(TextSpan(text: text.join()));
+                    text = [];
+                  }
+
+                  BasicWord? basicWord = context
+                      .watch<DictionaryOption>()
+                      .allWords
+                      .firstWhereOrNull((dictionaryElement) {
+                    return dictionaryElement.id == element.id;
+                  });
+
+                  if (basicWord != null) {
+                    spanText.add(
+                      WidgetSpan(
+                        child: Tooltip(
+                          showDuration: const Duration(milliseconds: 200),
+                          waitDuration: const Duration(milliseconds: 500),
+                          richMessage: basicWord.description.isNotEmpty
+                              ? WidgetSpan(
+                                  alignment: PlaceholderAlignment.baseline,
+                                  baseline: TextBaseline.alphabetic,
+                                  child: Container(
+                                    color: appTheme(context).primaryColor,
+                                    padding: const EdgeInsets.all(5),
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 250,
+                                    ),
+                                    child: Text(
+                                      maxLines: 5,
+                                      basicWord.description,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                              : const TextSpan(),
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              child: Text(
+                                element.word,
+                                style: TextStyle(color: basicWord.typeColor()),
+                              ),
+                              onTap: () {
+                                context.read<TypeViewMenu>().show = true;
+                                context.read<DictionaryOption>().selectWord =
+                                    basicWord;
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    text.add(element.word);
+                  }
+                } else {
+                  text.add(element.word);
+                }
+              }
+
+              if (text.isNotEmpty) {
+                spanText.add(TextSpan(text: text.join()));
+              }
+
+              return SingleChildScrollView(
+                child: Text.rich(
+                  TextSpan(children: spanText),
+                ),
+              );
+            }
+
             return SingleChildScrollView(
-              child: Text(value.toString()),
+              child: Text(value),
             );
           }();
 
@@ -276,7 +381,10 @@ class _CustomTableState extends State<CustomTable> {
           return MaterialStateProperty.resolveWith((Set<MaterialState> states) {
             return context
                 .read<TableOption>()
-                .typeRow[_rowsType[rowIndex] ?? 0]
+                .typeRow[int.tryParse(_rowsData[rowIndex]?[
+                        _helperTableColumnsList.indexWhere(
+                            (element) => element.type == "type")]) ??
+                    0]
                 ?.color;
           });
         }
@@ -324,21 +432,32 @@ class _CustomTableState extends State<CustomTable> {
     });
   }
 
-  Map<int, int> get rowsType => _rowsType;
+  Map<int, Map<String, String>> get titleData => _titleData;
 
-  set rowsType(Map<int, int> rowsType) {
-    _rowsType = rowsType;
-    buildTableRows();
+  set titleData(Map<int, Map<String, String>> titleData) {
+    setState(() {
+      _titleData = titleData;
+    });
+
+    // fullBuild();
   }
 
-  Map<int, String> get titleData => _titleData;
+  void setTitleData(Map<int, String> title, Map<int, String> titleTypes) {
+    if (title.length != titleTypes.length) {
+      throw Exception(
+          'Ошибка при формировании таблица количество заголовков и их типов не совподают');
+    }
 
-  set titleData(Map<int, String> title) {
     setState(() {
-      _titleData = title;
+      for (int index = 0; index < title.length; index++) {
+        _titleData[index] = {
+          'title': title[index] ?? "",
+          'type': titleTypes[index] ?? ""
+        };
+      }
     });
     lengthHeader = title.length;
-    fullBuild();
+    // fullBuild();
   }
 
   Map<int, List<dynamic>> get rowsData => _rowsData;
@@ -347,7 +466,7 @@ class _CustomTableState extends State<CustomTable> {
     setState(() {
       _rowsData = rows;
     });
-    fullBuild();
+    // fullBuild();
   }
 
   void fullBuild() {
@@ -367,7 +486,7 @@ class _CustomTableState extends State<CustomTable> {
 
   set fixStart(bool fix) {
     if (fixStart && (_lengthStart >= _lengthHeader - _lengthEnd)) {
-      fullBuild();
+      // fullBuild();
     }
 
     setState(() {
@@ -379,7 +498,7 @@ class _CustomTableState extends State<CustomTable> {
 
   set fixEnd(bool fix) {
     if (fixEnd & (_lengthEnd >= _lengthHeader - _lengthStart)) {
-      fullBuild();
+      // fullBuild();
     }
 
     setState(() {
@@ -393,7 +512,7 @@ class _CustomTableState extends State<CustomTable> {
     setState(() {
       _lengthHeader = lengthHeader >= 0 ? lengthHeader : 0;
     });
-    fullBuild();
+    // fullBuild();
   }
 
   int get lengthStart => _lengthStart;
@@ -406,7 +525,7 @@ class _CustomTableState extends State<CustomTable> {
         _lengthStart = 0;
       }
     });
-    fullBuild();
+    // fullBuild();
   }
 
   int get lengthEnd => _lengthEnd;
@@ -419,7 +538,7 @@ class _CustomTableState extends State<CustomTable> {
         _lengthEnd = 0;
       }
     });
-    fullBuild();
+    // fullBuild();
   }
 
   bool get enableColorStart => _enableColorStart;

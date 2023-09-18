@@ -18,15 +18,13 @@ class FileContainer extends StatefulWidget {
 class _FileContainerState extends State<FileContainer> {
   late String name;
   late FileStatus status;
-  late Widget _textScrolls;
   late Map<FileStatus, LinearGradient> colorStatus;
 
-  void textMove() {
+  bool _isMove = false;
+
+  void textMove(bool move) {
     setState(() {
-      _textScrolls = Marquee(
-        text: name,
-        blankSpace: 30,
-      );
+      _isMove = move;
     });
   }
 
@@ -36,23 +34,12 @@ class _FileContainerState extends State<FileContainer> {
     });
   }
 
-  void textStop() {
-    setState(() {
-      _textScrolls = Text(
-        name,
-        overflow: TextOverflow.fade,
-        maxLines: 1,
-      );
-    });
-  }
-
   @override
   void initState() {
     super.initState();
     name = widget.name;
     status = widget.status;
     widget.setStatus = setStatus;
-    textStop();
 
     colorStatus = {
       FileStatus.processing: const LinearGradient(
@@ -90,10 +77,10 @@ class _FileContainerState extends State<FileContainer> {
       children: [
         MouseRegion(
           onEnter: (event) {
-            textMove();
+            textMove(true);
           },
           onExit: (event) {
-            textStop();
+            textMove(false);
           },
           child: GestureDetector(
             onTap: () {
@@ -116,7 +103,7 @@ class _FileContainerState extends State<FileContainer> {
                           ? appTheme(context).tertiaryColor
                           : appTheme(context).secondaryColor),
                   borderRadius: const BorderRadius.all(Radius.circular(5))),
-              child: _textScrolls,
+              child: TextScroll(isMove: _isMove, text: name),
             ),
           ),
         ),
@@ -140,5 +127,32 @@ class _FileContainerState extends State<FileContainer> {
         ),
       ],
     );
+  }
+}
+
+class TextScroll extends StatefulWidget {
+  const TextScroll({super.key, this.isMove = false, this.text = ""});
+
+  final String text;
+  final bool isMove;
+
+  @override
+  State<TextScroll> createState() => _TextScrollState();
+}
+
+class _TextScrollState extends State<TextScroll> {
+  @override
+  Widget build(BuildContext context) {
+    return widget.isMove
+        ? Marquee(
+            scrollAxis: Axis.horizontal,
+            text: widget.text,
+            blankSpace: 20,
+          )
+        : Text(
+            widget.text,
+            overflow: TextOverflow.fade,
+            maxLines: 1,
+          );
   }
 }
