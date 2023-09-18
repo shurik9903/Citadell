@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter_univ/data/ModelData.dart';
 import 'package:flutter_univ/data/Option.dart';
 import 'package:flutter_univ/data/UserData.dart';
 import 'package:http/http.dart' as http;
@@ -14,12 +17,40 @@ Future<dynamic> getModelsFetch() async {
   });
 
   if (response.statusCode == 200) {
-    return response.body;
-  }
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
+    var data = response.body;
 
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+    ModelData model = ModelData.fromJson(jsonDecode(data));
+    List<ModelData> models =
+        (jsonDecode(data)["Models"] as List<dynamic>).map((e) {
+      return ModelData.fromJson(e);
+    }).toList();
+
+    return {'model': model, 'models': models};
+  }
+  throw Exception(response.body);
+}
+
+Future<void> updateModelsFetch(String newName, int id) async {
+  var userData = UserDataSingleton();
+  var option = OptionSingleton();
+
+  var response = await http.put(
+    Uri.parse('${option.url}models/$id'),
+    headers: {
+      "Content-type": "application/json",
+      "Accept": "application/json",
+      "token": userData.token,
+      "login": userData.login,
+    },
+    body: jsonEncode(
+      <String, String>{
+        'NameModel': newName,
+      },
+    ),
+  );
+
+  if (response.statusCode == 200) {
+    return;
+  }
+  throw Exception(response.body);
 }
