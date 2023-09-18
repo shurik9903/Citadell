@@ -1,26 +1,16 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_univ/modules/ConnectionFetch.dart';
+import 'package:flutter_univ/widgets/OptionPageWidgets/ServiceWidgets/DictionaryWorking.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 import '../theme/AppThemeDefault.dart';
-import '../widgets/WorkPageWidgets.dart/FileView.dart';
-import '../widgets/WorkPageWidgets.dart/Sidebar.dart';
-import '../widgets/WorkPageWidgets.dart/TableView.dart';
-
-class DictioneryText extends ChangeNotifier {
-  List<TextSpan> _dictText = [];
-
-  set dictText(List<TextSpan> dictText) {
-    _dictText = dictText;
-    notifyListeners();
-  }
-
-  List<TextSpan> get dictText => _dictText;
-}
+import '../widgets/WorkPageWidgets/FileView.dart';
+import '../widgets/WorkPageWidgets/Sidebar.dart';
+import '../widgets/WorkPageWidgets/TableView.dart';
 
 class TypeViewMenu extends ChangeNotifier {
-  bool _show = true;
+  bool _show = false;
 
   set show(bool show) {
     _show = show;
@@ -38,7 +28,7 @@ class WorkPage extends StatefulWidget {
 }
 
 class _WorkPageState extends State<WorkPage> {
-  final DictioneryText _dictioneryText = DictioneryText();
+  final DictionaryOption _dictionaryOption = DictionaryOption();
   final TypeViewMenu _typeViewMenu = TypeViewMenu();
 
   @override
@@ -68,13 +58,15 @@ class _WorkPageState extends State<WorkPage> {
       providers: [
         //Добавление Provider темы в MultiProvider
         ChangeNotifierProvider(
-          create: (context) => _dictioneryText,
+          create: (context) => _dictionaryOption,
         ),
         ChangeNotifierProvider(
           create: (context) => _typeViewMenu,
         ),
       ],
       builder: (context, child) {
+        context.read<DictionaryOption>().updateFetchWords();
+
         return Center(
           child: Container(
             color: appTheme(context).tertiaryColor,
@@ -83,7 +75,7 @@ class _WorkPageState extends State<WorkPage> {
               mainAxisSize: MainAxisSize.max,
               children: [
                 Expanded(
-                  flex: context.watch<TypeViewMenu>().show ? 1500 : 900,
+                  flex: context.watch<TypeViewMenu>().show ? 900 : 1500,
                   child: const Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     mainAxisSize: MainAxisSize.max,
@@ -106,7 +98,7 @@ class _WorkPageState extends State<WorkPage> {
                   flex: 3,
                 ),
                 Expanded(
-                  flex: context.watch<TypeViewMenu>().show ? 80 : 200,
+                  flex: context.watch<TypeViewMenu>().show ? 200 : 50,
                   child: Stack(
                     fit: StackFit.expand,
                     clipBehavior: Clip.none,
@@ -117,8 +109,9 @@ class _WorkPageState extends State<WorkPage> {
                           alignment: Alignment.centerLeft,
                           child: FractionallySizedBox(
                             heightFactor: 0.2,
-                            widthFactor:
-                                context.watch<TypeViewMenu>().show ? 0.3 : 0.1,
+                            widthFactor: context.watch<TypeViewMenu>().show
+                                ? 0.05
+                                : 0.35,
                             child: Container(
                               margin: const EdgeInsets.only(right: 5),
                               child: TextButton(
@@ -133,11 +126,11 @@ class _WorkPageState extends State<WorkPage> {
                                               .watch<TypeViewMenu>()
                                               .show
                                           ? const BorderRadius.only(
-                                              topLeft: Radius.circular(30),
-                                              bottomLeft: Radius.circular(30))
-                                          : const BorderRadius.only(
                                               topRight: Radius.circular(30),
-                                              bottomRight: Radius.circular(30)),
+                                              bottomRight: Radius.circular(30))
+                                          : const BorderRadius.only(
+                                              topLeft: Radius.circular(30),
+                                              bottomLeft: Radius.circular(30)),
                                     ),
                                   ),
                                 ),
@@ -146,8 +139,8 @@ class _WorkPageState extends State<WorkPage> {
                                       !context.read<TypeViewMenu>().show;
                                 },
                                 child: context.watch<TypeViewMenu>().show
-                                    ? const Text('<')
-                                    : const Text('>'),
+                                    ? const Text('>')
+                                    : const Text('<'),
                               ),
                             ),
                           ),

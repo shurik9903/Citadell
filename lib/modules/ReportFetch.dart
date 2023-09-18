@@ -20,11 +20,5 @@ Future<dynamic> getReportFetch(String name, String row) async {
     final report = jsonDecode(data)["report"];
     return report;
   }
-
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }

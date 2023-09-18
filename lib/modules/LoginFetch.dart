@@ -6,7 +6,7 @@ import '../data/Option.dart';
 import '../data/UserData.dart';
 import '../data/LoginData.dart';
 
-Future<dynamic> loginFetch(String login, String password) async {
+Future<void> loginFetch(String login, String password) async {
   var option = OptionSingleton();
 
   var response = await http.post(Uri.parse('${option.url}login'),
@@ -23,15 +23,10 @@ Future<dynamic> loginFetch(String login, String password) async {
 
     var userData = UserDataSingleton();
 
-    userData.login = loginData.login ?? '';
-    userData.token = loginData.token ?? '';
+    userData.login = loginData.login;
+    userData.token = loginData.token;
 
-    return '';
+    return;
   }
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }

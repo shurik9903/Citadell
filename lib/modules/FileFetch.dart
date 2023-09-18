@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:flutter_univ/data/FileData.dart';
-import 'package:flutter_univ/widgets/DialogWindowWidgets/FileDialog.dart';
 import 'package:http/http.dart' as http;
 import '../data/Option.dart';
 import '../data/UserData.dart';
 
-Future<dynamic> getFileFetch(String fileName) async {
+Future<void> getFileFetch(String fileName) async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
   var response =
@@ -17,15 +16,10 @@ Future<dynamic> getFileFetch(String fileName) async {
   });
 
   if (response.statusCode == 200) {
-    return '';
+    return;
   }
 
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }
 
 Future<dynamic> saveFileFetch(String fileData) async {
@@ -47,15 +41,10 @@ Future<dynamic> saveFileFetch(String fileData) async {
     var replace = jsonDecode(data)["Replace"];
     return replace;
   }
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }
 
-Future<dynamic> getAllUserFileFetch() async {
+Future<List<FileData>?> getAllUserFileFetch() async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
 
@@ -76,15 +65,10 @@ Future<dynamic> getAllUserFileFetch() async {
 
     return files;
   }
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }
 
-Future<dynamic> getDocFetch(String name,
+Future<DocData> getDocFetch(String name,
     {int start = 1, int diapason = 25}) async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
@@ -101,18 +85,14 @@ Future<dynamic> getDocFetch(String name,
   if (response.statusCode == 200) {
     var data = response.body;
     final docData = DocData.fromJson(jsonDecode(data));
+
     return docData;
   }
 
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }
 
-Future<dynamic> rewriteFileFetch(String docName) async {
+Future<void> rewriteFileFetch(String docName) async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
 
@@ -125,18 +105,13 @@ Future<dynamic> rewriteFileFetch(String docName) async {
   });
 
   if (response.statusCode == 200) {
-    return "";
+    return;
   }
 
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }
 
-Future<dynamic> updateDocFetch(String docName, String docData) async {
+Future<void> updateDocFetch(String docName, String docData) async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
 
@@ -150,18 +125,13 @@ Future<dynamic> updateDocFetch(String docName, String docData) async {
       body: docData);
 
   if (response.statusCode == 200) {
-    return "";
+    return;
   }
 
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }
 
-Future<dynamic> deleteFileFetch(String fileName) async {
+Future<void> deleteFileFetch(String fileName) async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
   var response = await http
@@ -173,13 +143,8 @@ Future<dynamic> deleteFileFetch(String fileName) async {
   });
 
   if (response.statusCode == 200) {
-    return '';
+    return;
   }
 
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }

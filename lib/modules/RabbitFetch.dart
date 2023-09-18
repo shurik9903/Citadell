@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 import '../data/Option.dart';
-import '../data/UserData.dart';
 
-Future<dynamic> rabbitFetch() async {
+Future<void> rabbitFetch() async {
   var option = OptionSingleton();
 
   var response = await http.get(Uri.parse('${option.url}test'), headers: {
@@ -14,12 +11,7 @@ Future<dynamic> rabbitFetch() async {
   });
 
   if (response.statusCode == 200) {
-    return '';
+    return;
   }
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }

@@ -12,7 +12,7 @@ import 'package:flutter_univ/theme/AppThemeDefault.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/CustomDialog.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/MessageDialog.dart';
 import 'package:flutter_univ/widgets/DialogWindowWidgets/OkCancelDialog.dart';
-import 'package:flutter_univ/widgets/WorkPageWidgets.dart/FileContainer.dart';
+import 'package:flutter_univ/widgets/WorkPageWidgets/FileContainer.dart';
 
 import 'package:provider/provider.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -285,6 +285,7 @@ class OpenFiles extends ChangeNotifier {
   SelectFile? _selectedFile;
   // TableOption _tableOption = TableOption();
   Map<int, String> _title = {};
+  Map<int, String> _titleTypes = {};
   Map<int, String> _fileTitle = {};
   Map<int, List<dynamic>> _fileRow = {};
   Map<int, int> _rowsType = {};
@@ -315,13 +316,20 @@ class OpenFiles extends ChangeNotifier {
 
     () async {
       if (allSelect != null && selectedFile != null) {
-        await saveReportData(jsonEncode({'allSelect': allSelect.toString()}));
+        await saveRowData(jsonEncode({'allSelect': allSelect.toString()}));
         refreshData();
       }
     }();
 
     notifyListeners();
   }
+
+  set titleTypes(Map<int, String> titleTypes) {
+    _titleTypes = titleTypes;
+    notifyListeners();
+  }
+
+  Map<int, String> get titleTypes => _titleTypes;
 
   set title(Map<int, String> title) {
     _title = title;
@@ -395,7 +403,7 @@ class OpenFiles extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveReportData(String changeData) async {
+  Future<void> saveRowData(String changeData) async {
     if (selectedFile != null && selectedFile!.name.isNotEmpty) {
       await updateDocFetch(selectedFile!.name, changeData);
     }
@@ -442,63 +450,57 @@ class OpenFiles extends ChangeNotifier {
       int maxRowLenght = -1;
 
       try {
-        if (docData is DocData) {
-          int titleLength = docData.title?.length ?? 0;
+        int titleLength = docData.title.length;
 
-          if (titleLength < 5) {
-            throw Exception(
-                "File Error 4: Файл поврежден и не может быть прочитан. Отсутствуют столбцы.");
-          }
-
-          docData.title
-              ?.getRange(0, (titleLength - 4))
-              .toList()
-              .asMap()
-              .forEach((key, value) {
-            title[key] = value;
-          });
-
-          selectedRow = {};
-          rowsType = docData.type?.map((key, value) {
-                return MapEntry(int.parse(key), int.parse(value as String));
-              }) ??
-              {};
-
-          docData.rows?.forEach((key, value) {
-            if (value is List<dynamic>) {
-              if (maxRowLenght < value.length) {
-                maxRowLenght = value.length;
-              }
-            } else {
-              throw Exception(
-                  "File Error 1: Файл поврежден и не может быть прочитан.");
-            }
-          });
-        } else {
+        if (titleLength < 5) {
           throw Exception(
-              "File Error 2: Файл поврежден и не может быть прочитан.");
+              "File Error 4: Файл поврежден и не может быть прочитан. Отсутствуют дополнительные столбцы.");
         }
 
-        if (docData.title?.length != maxRowLenght) {
+        docData.title
+            .getRange(0, (titleLength - 4))
+            .toList()
+            .asMap()
+            .forEach((key, value) {
+          title[key] = value;
+        });
+
+        selectedRow = {};
+
+        docData.rows.forEach((key, value) {
+          if (value is List<dynamic>) {
+            if (maxRowLenght < value.length) {
+              maxRowLenght = value.length;
+            }
+          } else {
+            throw Exception(
+                "File Error 1: Файл поврежден и не может быть прочитан.");
+          }
+        });
+
+        print(docData.title);
+
+        if (docData.title.length != maxRowLenght) {
           throw Exception(
-              "File Error 3: Файл поврежден и не может быть прочитан. Количество строк превышает количество столбцов.");
+              "File Error 3: Файл поврежден и не может быть прочитан. Количество заголовков превышает количество столбцов.");
         }
 
         if (newFile) {
           SelectFile selectFile = SelectFile(
             name: name,
             start: 1,
-            numberRows: docData.rowNumber ?? 0,
+            numberRows: docData.rowNumber,
           );
 
           addFile(selectFile);
         }
 
-        fileTitle = docData.title?.asMap() ?? {};
+        fileTitle = docData.title.asMap();
+        titleTypes = docData.titleTypes.asMap();
 
         Map<int, List<dynamic>> rows = {};
 
-        docData.rows?.forEach((key, value) {
+        docData.rows.forEach((key, value) {
           rows[int.parse(key)] = value as List<dynamic>;
         });
 
@@ -708,6 +710,10 @@ class _MyAppState extends State<MyApp> {
                                 constraints: BoxConstraints.tightFor(
                                     height: max(840, constraints.maxHeight),
                                     width: max(1920, constraints.maxWidth)),
+
+                                // height: max(600, constraints.maxHeight),
+                                // width: max(800, constraints.maxWidth)),
+
                                 child: pageFactory.pageCreator(_enumPage)),
                           ),
                         ),
@@ -763,8 +769,6 @@ class _DrawerMenuState extends State<DrawerMenu> {
         ListTile(
           title: const Text("Загрузить данные"),
           onTap: () async {
-            // await getAllUserFileFetch().then((value) {
-
             showCustomDialogWindow(
                 context: context,
                 child: const FilesContainer(),
@@ -901,7 +905,7 @@ class _FilesContainerState extends State<FilesContainer> {
   void update() {
     getAllUserFileFetch().then((value) {
       setState(() {
-        files = value;
+        files = value ?? [];
       });
     }).catchError((error) {
       files = [];
@@ -917,8 +921,9 @@ class _FilesContainerState extends State<FilesContainer> {
         children: [
           ...(files).map<Widget>((value) {
             return SelectFileContainer(
-              name: value.name ?? ' ',
-              fileID: value.id ?? -1,
+              key: Key(value.id.toString()),
+              name: value.name,
+              fileID: value.id,
               deleteFile: update,
             );
           }).toList(),

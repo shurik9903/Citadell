@@ -1,13 +1,11 @@
 import 'dart:convert';
 
-import 'package:flutter_univ/data/AnalysisTextData.dart';
 import 'package:flutter_univ/data/Option.dart';
 
 import '../data/UserData.dart';
 import 'package:http/http.dart' as http;
 
-Future<dynamic> fileAnalysisFetch(
-    String fileName, int column, int select) async {
+Future<void> fileAnalysisFetch(String fileName, int column, int select) async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
 
@@ -29,20 +27,17 @@ Future<dynamic> fileAnalysisFetch(
   );
 
   if (response.statusCode == 200) {
-    return '';
+    return;
   }
 
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }
 
-Future<dynamic> getAnalysisFetch(String uuid) async {
+Future<void> getAnalysisFetch(String uuid) async {
   var userData = UserDataSingleton();
   var option = OptionSingleton();
+
+  print(uuid);
 
   var response =
       await http.get(Uri.parse('${option.url}analysis/result/$uuid'), headers: {
@@ -53,13 +48,8 @@ Future<dynamic> getAnalysisFetch(String uuid) async {
   });
 
   if (response.statusCode == 200) {
-    return '';
+    return;
   }
 
-  if (response.statusCode == 401) {
-    throw Exception(response.statusCode);
-  }
-
-  print(response.statusCode);
-  throw Exception(response.statusCode);
+  throw Exception(response.body);
 }
